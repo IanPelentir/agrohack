@@ -74,7 +74,7 @@ def popular_dados_demonstracao():
     Movimentacao.objects.create(
         produto=p_vacina, lote=lote_vac, tipo="ENTRADA", quantidade=Decimal("300.00"),
         data_movimentacao=hoje - timedelta(days=40), preco_unitario=Decimal("2.80"),
-        fornecedor="Distribuidora Veterinária Jamari", destino="Geladeira Veterinária", responsavel="Dra. Larissa"
+        fornecedor="Distribuidora Veterinária Jamari", destino="Geladeira Veterinária", responsavel="Dra. Bruna"
     )
     # Saída pequena de 50 doses há 10 dias. Restam 250 doses para vencer em 12 dias (Risco de Perda!)
     Movimentacao.objects.create(
@@ -107,12 +107,12 @@ def popular_dados_demonstracao():
     Movimentacao.objects.create(
         produto=p_oxitetra, lote=lote_oxi_venc, tipo="ENTRADA", quantidade=Decimal("10.00"),
         data_movimentacao=hoje - timedelta(days=200), preco_unitario=Decimal("40.00"),
-        fornecedor="Agropecuária Ariquemes", destino="Farmácia Veterinária", responsavel="Dra. Larissa"
+        fornecedor="Agropecuária Ariquemes", destino="Farmácia Veterinária", responsavel="Dra. Bruna"
     )
     Movimentacao.objects.create(
         produto=p_oxitetra, lote=lote_oxi_venc, tipo="SAIDA", quantidade=Decimal("6.00"),
         data_movimentacao=hoje - timedelta(days=60),
-        destino="Enfermaria Bovinos", responsavel="Dra. Larissa"
+        destino="Enfermaria Bovinos", responsavel="Dra. Bruna"
     )
     # Sobram 4 frascos vencidos!
 

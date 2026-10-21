@@ -11,15 +11,15 @@
 
 A equipe é multidisciplinar, integrando competências de tecnologia da informação e ciências agrárias para garantir aderência real às rotinas da produção rural no estado de Rondônia:
 
-| Nome do Integrante | Curso / Área | Função no Projeto | Responsabilidade Principal |
+| Nome do Integrante | Curso / Período | Função no Projeto | Responsabilidade Principal |
 |---|---|---|---|
-| **Gabriel Santos** | Análise e Desenv. de Sistemas (ADS) | **Líder de Projeto & Arquiteto Back-end** | **Integrante Responsável**; arquitetura Django, modelagem de dados e conformidade regulamentar |
-| **Lucas Oliveira** | Análise e Desenv. de Sistemas (ADS) | Engenheiro de Dados & Motor Analítico | Implementação das regras determinísticas de análise, cálculos estatísticos e testes |
-| **Matheus Ferreira** | Análise e Desenv. de Sistemas (ADS) | Desenvolvedor Front-end & Usabilidade | Construção da interface com foco no produtor rural (To-Do List, acessibilidade de semáforo e Chart.js) |
-| **Larissa Menezes** | Medicina Veterinária | Consultora de Domínio Rural & Validação | Definição das regras de negócio de medicamentos, defensivos, controle de lotes, carência e validação de campo |
+| **Ian Pelentir Ramos** | ADS — 4º período | **Líder de Projeto & Arquiteto Back-end** | **Integrante Responsável**; arquitetura Django, modelagem de dados e conformidade regulamentar |
+| **Bruna Pereira da Silva** | Medicina Veterinária — 2º período | **Consultora de Domínio Rural & Validação** | Definição das regras de negócio de medicamentos, defensivos, controle de lotes, carência e validação de campo |
+| **Alan Menezes de Araújo** | ADS — 4º período | **Engenheiro de Dados & Motor Analítico** | Implementação das regras determinísticas de análise, cálculos estatísticos e suíte de testes |
+| **Marco Antonio de Oliveira Medeiros** | ADS — 4º período | **Desenvolvedor Front-end & Usabilidade** | Construção da interface com foco no produtor rural (To-Do List, acessibilidade de semáforo e Chart.js) |
 
-* **Integrante Responsável pelo Projeto:** Gabriel Santos (ADS — IFRO Campus Ariquemes)  
-* **Contato Técnico:** `equipe.agrohack2026@ifro.edu.br`
+* **Integrante Responsável pelo Projeto:** Ian Pelentir Ramos (ADS — 4º período — IFRO Campus Ariquemes)  
+* **Contato Técnico:** `ianpelentir7@gmail.com`
 
 ---
 
@@ -63,7 +63,7 @@ Instruções reprodutíveis para execução do ambiente de desenvolvimento no Li
 
 ```bash
 # 1. Clonar o repositório oficial
-git clone https://github.com/usuario/agrohack.git
+git clone https://github.com/IanPelentir/agrohack.git
 cd agrohack
 
 # 2. Criar e ativar o ambiente virtual (Linux / macOS)
@@ -162,7 +162,7 @@ python manage.py test
   - Teste de integridade de formulários e tratamento de erros de importação CSV.
 
 ### 7.2 Validação de Domínio (Medicina Veterinária)
-A integrante Larissa Menezes (estudante de Medicina Veterinária) conduziu a validação dos fluxos com foco nas práticas de campo:
+A integrante Bruna Pereira da Silva (estudante de Medicina Veterinária — 2º período) conduziu a validação dos fluxos com foco nas práticas de campo:
 * **Medicamentos e Vacinas:** Confirmação de que produtos biológicos não podem ter prazos de carência e validade ignorados. O controle por lote individual foi validado como essencial para evitar a aplicação de lotes vencidos no rebanho.
 * **Linguagem Acessível:** Ajuste dos textos das justificativas para evitar termos técnicos excessivos de computação (como *"desvio padrão"*) e apresentar explicações diretas ao produtor (como *"saída atípica muito acima da média recente"*).
 

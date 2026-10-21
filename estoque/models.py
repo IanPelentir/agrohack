@@ -94,3 +94,4 @@ class Movimentacao(models.Model):
 
     def __str__(self):
         return f"{self.get_tipo_display()} de {self.quantidade} {self.produto.unidade} em {self.data_movimentacao}"
+
