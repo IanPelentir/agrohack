@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block title %}Consulta de Insumos e Estoque{% endblock %}
+
+{% block content %}
+<div class="product-list-container">
+  <div class="section-header">
+    <div>
+      <h2 class="section-title">
+        <span aria-hidden="true">📦</span> Insumos e Saldo em Estoque
+      </h2>
+      <p class="section-desc">
+        Consulta organizada de produtos, saldos calculados, estoque mínimo e cobertura estimada.
+      </p>
+    </div>
+    <div class="filter-bar">
+      <a href="{% url 'estoque:movimentacao_nova' %}" class="btn btn-primary btn-sm">
+        <span>➕</span> Nova Movimentação
+      </a>
+      <a href="{% url 'estoque:importar' %}" class="btn btn-secondary btn-sm">
+        <span>📥</span> Importar CSV
+      </a>
+    </div>
+  </div>
+
+  <!-- Barra de Filtros e Busca -->
+  <div class="chart-card" style="padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
+    <form method="get" class="filter-bar" style="justify-content: space-between; width: 100%;">
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; flex: 1;">
+        <input type="text" name="busca" value="{{ busca_atual|default:'' }}" class="form-control" placeholder="Buscar por insumo..." style="max-width: 280px;">
+
+        <select name="categoria" class="form-control" style="max-width: 200px;">
+          <option value="">Todas as Categorias</option>
+          {% for cat in categorias %}
+            <option value="{{ cat }}" {% if cat == categoria_selecionada %}selected{% endif %}>{{ cat }}</option>
+          {% endfor %}
+        </select>
+
+        <select name="status" class="form-control" style="max-width: 200px;">
+          <option value="">Todos os Status</option>
+          <option value="critico" {% if status_selecionado == 'critico' %}selected{% endif %}>🔴 Estoque Crítico</option>
+          <option value="atencao" {% if status_selecionado == 'atencao' %}selected{% endif %}>🟡 Atenção / Médio</option>
+          <option value="normal" {% if status_selecionado == 'normal' %}selected{% endif %}>🟢 Estoque Normal</option>
+        </select>
+
+        <button type="submit" class="btn btn-secondary btn-sm">
+          Filtrar
+        </button>
+
+        {% if busca_atual or categoria_selecionada or status_selecionado %}
+          <a href="{% url 'estoque:produto_lista' %}" class="btn btn-sm" style="color: var(--color-text-muted);">
+            Limpar
+          </a>
+        {% endif %}
+      </div>
+
+      <div style="font-size: 0.85rem; color: var(--color-text-muted); white-space: nowrap;">
+        Total: <strong>{{ produtos|length|default:0 }}</strong> produto(s)
+      </div>
+    </form>
+  </div>
+
+  <!-- Tabela de Produtos -->
+  {% if produtos %}
+    <div class="table-container">
+      <table class="data-table" aria-label="Tabela de Insumos">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Produto</th>
+            <th>Categoria</th>
+            <th>Saldo Atual</th>
+            <th>Estoque Mín.</th>
+            <th>Cobertura Estimada</th>
+            <th>Preço Unit.</th>
+            <th>Valor Total</th>
+            <th style="text-align: right;">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in produtos %}
+            <tr>
+              <td>
+                {% if p.status_estoque == 'CRITICO' %}
+                  <span class="semaphore-badge alta" title="Saldo abaixo ou igual ao estoque mínimo">
+                    <span class="dot"></span> Crítico
+                  </span>
+                {% elif p.status_estoque == 'ATENCAO' %}
+                  <span class="semaphore-badge media" title="Saldo entre 100% e 150% do mínimo">
+                    <span class="dot"></span> Atenção
+                  </span>
+                {% else %}
+                  <span class="semaphore-badge baixa" title="Saldo em nível seguro">
+                    <span class="dot"></span> Seguro
+                  </span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{% url 'estoque:produto_detalhe' p.id %}" style="font-weight: 700; color: var(--color-text-main); text-decoration: none;">
+                  {{ p.nome }}
+                </a>
+              </td>
+              <td>
+                <span class="category-tag">{{ p.categoria|default:"Geral" }}</span>
+              </td>
+              <td>
+                <strong>{{ p.saldo }}</strong> <span style="font-size: 0.8rem; color: var(--color-text-muted);">{{ p.unidade }}</span>
+              </td>
+              <td>
+                {% if p.estoque_minimo is not None %}
+                  {{ p.estoque_minimo }} {{ p.unidade }}
+                {% else %}
+                  <span style="color: var(--color-text-light); font-size: 0.8rem;">Não definido</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if p.cobertura_dias is not None %}
+                  ~{{ p.cobertura_dias }} dia(s)
+                {% else %}
+                  <span style="color: var(--color-text-light); font-size: 0.8rem;" title="Histórico insuficiente para cálculo seguro (RN03)">
+                    Histórico insuf.
+                  </span>
+                {% endif %}
+              </td>
+              <td>
+                {% if p.preco_unitario %}
+                  R$ {{ p.preco_unitario|floatformat:2 }}
+                {% else %}
+                  <span style="color: var(--color-text-light); font-size: 0.8rem;" title="Preço não informado - não convertido para zero (RN02)">
+                    -
+                  </span>
+                {% endif %}
+              </td>
+              <td>
+                {% if p.valor_total %}
+                  <strong>R$ {{ p.valor_total|floatformat:2 }}</strong>
+                {% else %}
+                  <span style="color: var(--color-text-light); font-size: 0.8rem;">-</span>
+                {% endif %}
+              </td>
+              <td style="text-align: right;">
+                <div style="display: inline-flex; gap: 0.35rem;">
+                  <a href="{% url 'estoque:produto_detalhe' p.id %}" class="btn btn-sm btn-secondary" title="Ver detalhes completos e movimentações">
+                    Detalhes
+                  </a>
+                  <a href="{% url 'estoque:consumo_produto' p.id %}" class="btn btn-sm btn-secondary" title="Ver evolução temporal de consumo (RF03.6)">
+                    📈
+                  </a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📦</div>
+      <h3>Nenhum Produto Encontrado</h3>
+      <p>Nenhum item corresponde aos critérios de pesquisa ou o banco de dados ainda está vazio.</p>
+      <a href="{% url 'estoque:importar' %}" class="btn btn-primary">
+        Importar Base de Insumos
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

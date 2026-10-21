@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+
+{% block title %}Painel de Pendências (To-Do List){% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+  <div class="section-header">
+    <div>
+      <h2 class="section-title">
+        <span aria-hidden="true">📋</span> Painel de Ações Prioritárias
+      </h2>
+      <p class="section-desc">
+        Visão consolidada estilo To-Do List dos insumos que necessitam de atenção imediata na propriedade.
+      </p>
+    </div>
+    
+    <div class="filter-bar">
+      <a href="{% url 'estoque:movimentacao_nova' %}" class="btn btn-primary btn-sm" id="btn-registrar-saida">
+        <span>➕</span> Registrar Movimentação
+      </a>
+      <a href="{% url 'estoque:importar' %}" class="btn btn-secondary btn-sm" id="btn-reimportar">
+        <span>🔄</span> Atualizar / Recalcular
+      </a>
+    </div>
+  </div>
+
+  <!-- Cards de Indicadores Rápidos (KPIs) -->
+  <div class="kpi-grid" role="region" aria-label="Resumo de Alertas">
+    <div class="kpi-card urgent">
+      <div class="kpi-info">
+        <h3>Alta Prioridade</h3>
+        <div class="kpi-value" id="kpi-alta">{{ kpis.alta_prioridade|default:0 }}</div>
+        <div class="kpi-sub">Requer ação imediata</div>
+      </div>
+      <div class="kpi-icon" aria-hidden="true">🚨</div>
+    </div>
+
+    <div class="kpi-card warning">
+      <div class="kpi-info">
+        <h3>Média Prioridade</h3>
+        <div class="kpi-value" id="kpi-media">{{ kpis.media_prioridade|default:0 }}</div>
+        <div class="kpi-sub">Atenção nos próximos dias</div>
+      </div>
+      <div class="kpi-icon" aria-hidden="true">⚠️</div>
+    </div>
+
+    <div class="kpi-card normal">
+      <div class="kpi-info">
+        <h3>Itens Regulares</h3>
+        <div class="kpi-value" id="kpi-regulares">{{ kpis.itens_regulares|default:0 }}</div>
+        <div class="kpi-sub">Estoque em nível seguro</div>
+      </div>
+      <div class="kpi-icon" aria-hidden="true">✅</div>
+    </div>
+
+    <div class="kpi-card info">
+      <div class="kpi-info">
+        <h3>Total Monitorado</h3>
+        <div class="kpi-value" id="kpi-total-produtos">{{ kpis.total_produtos|default:0 }}</div>
+        <div class="kpi-sub">Produtos cadastrados</div>
+      </div>
+      <div class="kpi-icon" aria-hidden="true">📦</div>
+    </div>
+  </div>
+
+  <!-- Barra de Filtros Rápidos dos Alertas -->
+  <div class="section-header" style="margin-top: 1.5rem; margin-bottom: 1rem;">
+    <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--color-text-main);">
+      Lista de Pendências Geradas Automaticamente (RF02.1)
+    </h3>
+    <div class="filter-bar" id="alert-filters">
+      <button type="button" class="btn btn-sm btn-secondary filter-btn active" data-filter="all">Todos ({{ alertas|length|default:0 }})</button>
+      <button type="button" class="btn btn-sm btn-secondary filter-btn" data-filter="ALTA">🔴 Alta</button>
+      <button type="button" class="btn btn-sm btn-secondary filter-btn" data-filter="MEDIA">🟡 Média</button>
+      <button type="button" class="btn btn-sm btn-secondary filter-btn" data-filter="BAIXA">🟢 Baixa</button>
+    </div>
+  </div>
+
+  <!-- Lista de Alertas (To-Do List) -->
+  {% if alertas %}
+    <div class="alert-list" id="todo-alert-list" role="list" aria-label="Lista de alertas pendentes">
+      {% for alerta in alertas %}
+        <div class="alert-card {{ alerta.prioridade|lower }}" data-prioridade="{{ alerta.prioridade }}" role="listitem">
+          <!-- Checkbox para simulação de tratamento de pendência -->
+          <div>
+            <input type="checkbox" class="alert-checkbox" id="check-alerta-{{ forloop.counter }}" title="Marcar pendência como tratada">
+          </div>
+
+          <div class="alert-body">
+            <div class="alert-headline">
+              <span class="semaphore-badge {{ alerta.prioridade|lower }}">
+                <span class="dot" aria-hidden="true"></span>
+                Prioridade {{ alerta.prioridade }}
+              </span>
+
+              <span class="category-tag">{{ alerta.tipo_display|default:alerta.tipo }}</span>
+
+              <a href="{% url 'estoque:produto_detalhe' alerta.produto_id %}" class="alert-product-name" style="text-decoration: none; color: inherit;">
+                {{ alerta.produto_nome }}
+              </a>
+            </div>
+
+            <!-- Justificativa Amigável e Clara (RF02.3) -->
+            <p class="alert-justification">
+              <strong>Motivo:</strong> {{ alerta.justificativa }}
+            </p>
+
+            <!-- Metadados de Suporte do Cálculo -->
+            <div class="alert-meta">
+              {% if alerta.saldo is not None %}
+                <span class="alert-meta-item">
+                  <strong>Saldo Atual:</strong> {{ alerta.saldo }} {{ alerta.unidade }}
+                </span>
+              {% endif %}
+
+              {% if alerta.estoque_minimo is not None %}
+                <span class="alert-meta-item">
+                  <strong>Estoque Mínimo:</strong> {{ alerta.estoque_minimo }} {{ alerta.unidade }}
+                </span>
+              {% endif %}
+
+              {% if alerta.duracao_estimada %}
+                <span class="alert-meta-item">
+                  <strong>Duração Estimada:</strong> {{ alerta.duracao_estimada }}
+                </span>
+              {% endif %}
+
+              {% if alerta.validade %}
+                <span class="alert-meta-item">
+                  <strong>Validade:</strong> {{ alerta.validade|date:"d/m/Y" }}
+                </span>
+              {% endif %}
+
+              {% if alerta.lote %}
+                <span class="alert-meta-item">
+                  <strong>Lote:</strong> {{ alerta.lote }}
+                </span>
+              {% endif %}
+
+              {% if alerta.valor_total %}
+                <span class="alert-meta-item">
+                  <strong>Valor Estimado:</strong> R$ {{ alerta.valor_total|floatformat:2 }}
+                </span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Ações do Alerta -->
+          <div class="alert-actions">
+            <a href="{% url 'estoque:produto_detalhe' alerta.produto_id %}" class="btn btn-sm btn-secondary" title="Ver ficha técnica completa">
+              Detalhes
+            </a>
+            <a href="{% url 'estoque:consumo_produto' alerta.produto_id %}" class="btn btn-sm btn-secondary" title="Visualizar histórico de consumo">
+              📈 Gráfico
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+  {% else %}
+    <!-- Estado Vazio (Sem pendências ou sem dados) -->
+    <div class="empty-state">
+      <div class="empty-state-icon" aria-hidden="true">🌱</div>
+      <h3>Nenhum Alerta Pendente no Momento!</h3>
+      <p>
+        O estoque está equilibrado ou ainda não foram carregados registros para análise.
+        Você pode importar a base de movimentações do desafio para executar o diagnóstico.
+      </p>
+      <div style="display: flex; gap: 0.75rem; justify-content: center;">
+        <a href="{% url 'estoque:importar' %}" class="btn btn-primary" id="btn-empty-importar">
+          <span>📥</span> Importar Base de Dados
+        </a>
+        <a href="{% url 'estoque:movimentacao_nova' %}" class="btn btn-secondary" id="btn-empty-nova-mov">
+          <span>➕</span> Registrar Movimentação
+        </a>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+
+<!-- Explicação das Regras Analíticas Transparentes (Transparência Regulamentar) -->
+<div class="chart-card" style="margin-top: 2rem;">
+  <div class="chart-header">
+    <h3 style="font-size: 1.1rem; font-weight: 700;">Como Funcionam os Alertas Deste Painel</h3>
+    <span class="badge-tag">Regras Determinísticas e Auditáveis</span>
+  </div>
+  <div style="font-size: 0.875rem; color: var(--color-text-muted); display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+    <div>
+      <strong style="color: var(--color-text-main);">🔴 Alta Prioridade:</strong>
+      <p>Saldo em estoque igual ou inferior ao estoque mínimo recomendado (≤100%), ou produtos vencendo nos próximos 30 dias com consumo insuficiente para esgotar o lote antes da data de validade.</p>
+    </div>
+    <div>
+      <strong style="color: var(--color-text-main);">🟡 Média Prioridade:</strong>
+      <p>Saldo entre 100% e 150% do estoque mínimo, movimentações atípicas detectadas por desvio estatístico (>2σ com histórico mínimo de 5 registros) ou produtos com validade próxima a expirar.</p>
+    </div>
+    <div>
+      <strong style="color: var(--color-text-main);">🟢 Baixa Prioridade:</strong>
+      <p>Produtos com estoque confortável (>150% do mínimo) ou alto valor financeiro estocado com baixo giro de saídas recentes.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Filtro interativo no painel de pendências
+  document.addEventListener('DOMContentLoaded', function() {
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const alertCards = document.querySelectorAll('.alert-card');
+
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        filterButtons.forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+
+        const filter = this.getAttribute('data-filter');
+
+        alertCards.forEach(card => {
+          if (filter === 'all' || card.getAttribute('data-prioridade') === filter) {
+            card.style.display = 'grid';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    // Riscar visualmente o alerta ao marcar o checkbox estilo To-Do
+    const checkboxes = document.querySelectorAll('.alert-checkbox');
+    checkboxes.forEach(cb => {
+      cb.addEventListener('change', function() {
+        const card = this.closest('.alert-card');
+        if (this.checked) {
+          card.style.opacity = '0.4';
+          card.style.filter = 'grayscale(80%)';
+        } else {
+          card.style.opacity = '1';
+          card.style.filter = 'none';
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

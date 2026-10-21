@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Movimentação de Estoque{% endblock %}
+
+{% block content %}
+<div class="movement-form-container">
+  <div class="section-header">
+    <div>
+      <h2 class="section-title">
+        <span aria-hidden="true">➕</span> Registro de Movimentação de Estoque
+      </h2>
+      <p class="section-desc">
+        Registre entradas ou saídas de insumos. O motor recalculará automaticamente todos os alertas e pendências (RF01.3).
+      </p>
+    </div>
+    <div>
+      <a href="{% url 'estoque:painel' %}" class="btn btn-secondary btn-sm">
+        Voltar ao Painel
+      </a>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <form method="post" id="form-movimentacao">
+      {% csrf_token %}
+
+      <!-- Dados Principais -->
+      <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-primary-dark); border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem;">
+        1. Identificação da Operação
+      </h3>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="id_produto">Insumo / Produto *</label>
+          <select name="produto" id="id_produto" class="form-control" required>
+            <option value="">Selecione o insumo...</option>
+            {% for p in produtos %}
+              <option value="{{ p.id }}" {% if p.id == produto_selecionado_id %}selected{% endif %}>
+                {{ p.nome }} ({{ p.unidade }}) - Saldo atual: {{ p.saldo }}
+              </option>
+            {% endfor %}
+          </select>
+          <div class="form-help">Insumo que terá sua quantidade movimentada.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="id_tipo">Tipo de Movimentação *</label>
+          <select name="tipo" id="id_tipo" class="form-control" required>
+            <option value="SAIDA" selected>⬆️ Saída (Consumo / Aplicação no Campo)</option>
+            <option value="ENTRADA">⬇️ Entrada (Compra / Reposição de Estoque)</option>
+          </select>
+          <div class="form-help">Saídas abatem do saldo; Entradas adicionam ao saldo.</div>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="id_quantidade">Quantidade *</label>
+          <input type="number" step="0.01" min="0.01" name="quantidade" id="id_quantidade" class="form-control" placeholder="Ex: 50.00" required>
+          <div class="form-help">Informe na unidade de medida do produto.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="id_data">Data da Movimentação *</label>
+          <input type="date" name="data" id="id_data" class="form-control" value="{{ data_padrao }}" required>
+          <div class="form-help">Data da operação real no campo.</div>
+        </div>
+      </div>
+
+      <!-- Rastreabilidade e Lote (Campos Opcionais de RF01.2) -->
+      <h3 style="font-size: 1.1rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 1rem; color: var(--color-primary-dark); border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem;">
+        2. Rastreabilidade, Lote e Destino (Opcionais)
+      </h3>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="id_lote">Identificação do Lote</label>
+          <input type="text" name="lote" id="id_lote" class="form-control" placeholder="Ex: LT-2026-A1">
+          <div class="form-help">Opcional. Permite controle de validade individual.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="id_validade">Data de Validade (se lote novo)</label>
+          <input type="date" name="validade" id="id_validade" class="form-control">
+          <div class="form-help">Opcional. Utilizado no cálculo de risco de perdas (RF03.2).</div>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="id_preco">Preço Unitário de Aquisição (R$)</label>
+          <input type="number" step="0.01" min="0" name="preco_unitario" id="id_preco" class="form-control" placeholder="Ex: 125.50">
+          <div class="form-help">Opcional. Se não houver, deixe vazio (não será zero).</div>
+        </div>
+
+        <div class="form-group">
+          <label for="id_destino">Destino da Retirada / Aplicação</label>
+          <input type="text" name="destino" id="id_destino" class="form-control" placeholder="Ex: Talhão 04 - Pastagem Norte">
+          <div class="form-help">Opcional. Setor ou cultura de destino.</div>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="id_responsavel">Responsável pela Operação</label>
+          <input type="text" name="responsavel" id="id_responsavel" class="form-control" placeholder="Ex: João da Silva">
+        </div>
+
+        <div class="form-group">
+          <label for="id_fornecedor">Fornecedor (se entrada)</label>
+          <input type="text" name="fornecedor" id="id_fornecedor" class="form-control" placeholder="Ex: Agropecuária Rondônia">
+        </div>
+      </div>
+
+      <div style="margin-top: 1.75rem; display: flex; gap: 0.75rem; justify-content: flex-end;">
+        <a href="{% url 'estoque:painel' %}" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary" id="btn-salvar-mov">
+          <span>💾</span> Salvar Movimentação e Reanalisar Estoque
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

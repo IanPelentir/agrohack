@@ -1,0 +1,109 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Gestão Inteligente de Insumos{% endblock %} | AgroHack 2026/2</title>
+  <meta name="description" content="Sistema inteligente de apoio à decisão para gestão de insumos rurais, análise de estoque crítico, validade e acompanhamento temporal.">
+  
+  <!-- Tipografia Inter do Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Folha de Estilos Principal -->
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  
+  <!-- Chart.js para Visualização Temporal (RF03.6) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Barra Superior de Navegação -->
+  <header class="app-header" role="banner">
+    <div class="header-container">
+      <a href="{% url 'estoque:painel' %}" class="brand-wrapper" title="Ir para o Painel de Pendências">
+        <div class="brand-icon" aria-hidden="true">🌱</div>
+        <div class="brand-text">
+          <h1>AgroHack</h1>
+          <span>Gestão Inteligente de Insumos</span>
+        </div>
+      </a>
+
+      <nav class="main-nav" role="navigation" aria-label="Navegação Principal">
+        <a href="{% url 'estoque:painel' %}" class="nav-link {% if request.resolver_match.url_name == 'painel' %}active{% endif %}" id="nav-painel">
+          <span aria-hidden="true">📋</span> Painel de Pendências
+          {% if total_alertas_urgentes %}
+            <span class="nav-badge" title="{{ total_alertas_urgentes }} alertas urgentes">{{ total_alertas_urgentes }}</span>
+          {% endif %}
+        </a>
+        <a href="{% url 'estoque:produto_lista' %}" class="nav-link {% if request.resolver_match.url_name == 'produto_lista' or request.resolver_match.url_name == 'produto_detalhe' %}active{% endif %}" id="nav-produtos">
+          <span aria-hidden="true">📦</span> Produtos
+        </a>
+        <a href="{% url 'estoque:consumo' %}" class="nav-link {% if request.resolver_match.url_name == 'consumo' %}active{% endif %}" id="nav-consumo">
+          <span aria-hidden="true">📈</span> Consumo Temporal
+        </a>
+        <a href="{% url 'estoque:importar' %}" class="nav-link {% if request.resolver_match.url_name == 'importar' %}active{% endif %}" id="nav-importar">
+          <span aria-hidden="true">📥</span> Importar Dados
+        </a>
+        <a href="{% url 'estoque:movimentacao_nova' %}" class="btn btn-sm btn-accent" id="nav-nova-movimentacao">
+          <span aria-hidden="true">➕</span> Movimentação
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Conteúdo Principal -->
+  <main class="main-content" id="conteudo-principal">
+
+    <!-- Mensagens de Notificação do Django -->
+    {% if messages %}
+      <div class="messages-container" role="region" aria-label="Notificações do Sistema">
+        {% for message in messages %}
+          <div class="alert-message {{ message.tags }}" role="alert">
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Banner de Contexto de Transparência e Qualidade de Dados (RN03 / RN04) -->
+    <div class="context-banner" role="complementary" aria-label="Status de Validação de Dados">
+      <div class="context-banner-text">
+        <strong>Apoio à Decisão Rural:</strong> Alertas baseados em regras estatísticas determinísticas transparentes. Dados ausentes não são tratados como zero.
+      </div>
+      <div class="context-banner-badges">
+        <span class="badge-tag" title="Regulamento Oficial AgroHack 2026/2">AgroHack IFRO 2026/2</span>
+        <span class="badge-tag" title="Motor analítico determinístico e auditável">Análise Auditável</span>
+      </div>
+    </div>
+
+    {% block content %}
+    <!-- Conteúdo específico de cada tela -->
+    {% endblock %}
+
+  </main>
+
+  <!-- Rodapé Institucional e Acessível -->
+  <footer class="app-footer" role="contentinfo">
+    <div class="footer-container">
+      <div>
+        <p><strong>AgroHack 2026/2</strong> — Desafio Oficial: <em>Gestão inteligente de insumos em uma propriedade rural</em></p>
+        <p>IFRO Campus Ariquemes • Apresentação: 29/10/2026</p>
+      </div>
+      <div class="footer-links">
+        <a href="{% url 'estoque:painel' %}">Início</a>
+        <span>•</span>
+        <a href="{% url 'estoque:importar' %}">Carga de Registros</a>
+        <span>•</span>
+        <a href="{% url 'estoque:consumo' %}">Histórico</a>
+      </div>
+    </div>
+  </footer>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

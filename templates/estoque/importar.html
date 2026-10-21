@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block title %}Importação de Dados de Estoque (RF01){% endblock %}
+
+{% block content %}
+<div class="import-container">
+  <div class="section-header">
+    <div>
+      <h2 class="section-title">
+        <span aria-hidden="true">📥</span> Carga e Ingestão de Registros de Estoque
+      </h2>
+      <p class="section-desc">
+        Importe a base de dados em formato CSV para alimentar o motor analítico e gerar os diagnósticos de estoque.
+      </p>
+    </div>
+    <div>
+      <a href="{% url 'estoque:painel' %}" class="btn btn-secondary btn-sm">
+        Voltar ao Painel
+      </a>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <form method="post" enctype="multipart/form-data" id="form-importar">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label for="arquivo_csv">Selecione o arquivo CSV oficial ou simulado:</label>
+        
+        <div class="dropzone" id="dropzone-area" onclick="document.getElementById('arquivo_csv').click();">
+          <div class="dropzone-icon" aria-hidden="true">📄</div>
+          <h4 style="font-weight: 600; margin-bottom: 0.25rem;">Clique para selecionar ou arraste o arquivo CSV aqui</h4>
+          <p class="form-help" id="file-name-display">Formato esperado: .csv delimitado por vírgula ou ponto-e-vírgula (UTF-8)</p>
+          <input type="file" name="arquivo_csv" id="arquivo_csv" accept=".csv" style="display: none;" required>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <button type="submit" class="btn btn-primary" id="btn-submit-upload">
+          <span>🚀</span> Processar Arquivo e Executar Análise
+        </button>
+
+        <!-- Botão especial para carregar base de dados de demonstração do AgroHack -->
+        <a href="{% url 'estoque:carregar_demonstracao' %}" class="btn btn-secondary" id="btn-load-demo" title="Carregar ~80 registros fictícios preparados para demonstração da banca">
+          <span>✨</span> Carregar Dados Demonstrativos do Hackathon
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Prévia e Validação de Importação (se houver dados submetidos para conferência) -->
+  {% if previa_importacao %}
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3 style="font-size: 1.15rem; font-weight: 700;">Prévia dos Dados Identificados</h3>
+        <span class="badge-tag">{{ previa_importacao.total_linhas }} registros detectados</span>
+      </div>
+
+      {% if previa_importacao.erros %}
+        <div class="alert-message error" style="margin-bottom: 1rem;">
+          <strong>Atenção aos erros encontrados nas linhas:</strong>
+          <ul style="margin-left: 1.25rem; margin-top: 0.5rem;">
+            {% for erro in previa_importacao.erros %}
+              <li>{{ erro }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Linha</th>
+              <th>Produto</th>
+              <th>Categoria</th>
+              <th>Qtd</th>
+              <th>Unidade</th>
+              <th>Tipo</th>
+              <th>Data</th>
+              <th>Est. Mín.</th>
+              <th>Validade</th>
+              <th>Preço</th>
+              <th>Status Validação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for linha in previa_importacao.linhas %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td><strong>{{ linha.produto }}</strong></td>
+                <td>{{ linha.categoria|default:"-" }}</td>
+                <td>{{ linha.quantidade }}</td>
+                <td>{{ linha.unidade }}</td>
+                <td>
+                  <span class="category-tag">{{ linha.tipo_movimentacao }}</span>
+                </td>
+                <td>{{ linha.data_movimentacao|default:"-" }}</td>
+                <td>{{ linha.estoque_minimo|default:"Não inf." }}</td>
+                <td>{{ linha.data_validade|default:"-" }}</td>
+                <td>{% if linha.preco_aquisicao %}R$ {{ linha.preco_aquisicao }}{% else %}-{% endif %}</td>
+                <td>
+                  {% if linha.valido %}
+                    <span class="semaphore-badge baixa"><span class="dot"></span> Válido</span>
+                  {% else %}
+                    <span class="semaphore-badge alta"><span class="dot"></span> {{ linha.motivo_invalido }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <form method="post" action="{% url 'estoque:confirmar_importacao' %}" style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        {% csrf_token %}
+        <a href="{% url 'estoque:importar' %}" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">
+          Confirmar e Gravar Registros Definitivamente
+        </button>
+      </form>
+    </div>
+  {% endif %}
+
+  <!-- Documentação dos 13 Campos Suportados (RF01.2) -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <h3 style="font-size: 1.1rem; font-weight: 700;">Campos Suportados Conforme Requisito RF01.2</h3>
+      <span class="category-tag">Regulamento Oficial</span>
+    </div>
+
+    <p style="font-size: 0.875rem; color: var(--color-text-muted); margin-bottom: 1rem;">
+      O importador suporta até 13 campos descritos no regulamento do evento. Campos opcionais ausentes na planilha são preservados como nulos (não são convertidos indevidamente para zero):
+    </p>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; font-size: 0.85rem;">
+      <div style="padding: 0.75rem; background: #f8faf8; border-radius: var(--radius-sm); border: 1px solid var(--color-border);">
+        <strong>Identificação do Insumo:</strong>
+        <ul style="margin-left: 1.25rem; margin-top: 0.35rem; color: var(--color-text-muted);">
+          <li><code>produto</code> (Obrigatório)</li>
+          <li><code>categoria</code> (Opcional, ex: Defensivo, Adubo, Semente)</li>
+          <li><code>unidade</code> (Obrigatório, ex: kg, L, sc, un)</li>
+        </ul>
+      </div>
+
+      <div style="padding: 0.75rem; background: #f8faf8; border-radius: var(--radius-sm); border: 1px solid var(--color-border);">
+        <strong>Movimentação & Quantidade:</strong>
+        <ul style="margin-left: 1.25rem; margin-top: 0.35rem; color: var(--color-text-muted);">
+          <li><code>quantidade</code> (Obrigatório, valor numérico)</li>
+          <li><code>tipo_movimentacao</code> (Entrada ou Saída)</li>
+          <li><code>data_movimentacao</code> (Data da operação)</li>
+          <li><code>estoque_minimo</code> (Opcional, para parâmetro crítico)</li>
+        </ul>
+      </div>
+
+      <div style="padding: 0.75rem; background: #f8faf8; border-radius: var(--radius-sm); border: 1px solid var(--color-border);">
+        <strong>Rastreabilidade & Validade:</strong>
+        <ul style="margin-left: 1.25rem; margin-top: 0.35rem; color: var(--color-text-muted);">
+          <li><code>data_validade</code> (Opcional, formato AAAA-MM-DD)</li>
+          <li><code>lote</code> (Opcional, código do lote)</li>
+          <li><code>preco_aquisicao</code> (Opcional, valor unitário)</li>
+          <li><code>fornecedor</code>, <code>destino</code>, <code>responsavel</code></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Feedback imediato ao selecionar arquivo no dropzone
+  const fileInput = document.getElementById('arquivo_csv');
+  const fileNameDisplay = document.getElementById('file-name-display');
+
+  if (fileInput) {
+    fileInput.addEventListener('change', function(e) {
+      if (this.files && this.files[0]) {
+        fileNameDisplay.innerHTML = `<strong>Arquivo selecionado:</strong> ${this.files[0].name} (${(this.files[0].size / 1024).toFixed(1)} KB)`;
+        fileNameDisplay.style.color = 'var(--color-primary)';
+      }
+    });
+  }
+</script>
+{% endblock %}

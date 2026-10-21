@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ produto.nome }} | Detalhes do Insumo{% endblock %}
+
+{% block content %}
+<div class="product-detail-container">
+  <div class="section-header">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+        <span class="category-tag">{{ produto.categoria|default:"Insumo Rural" }}</span>
+        {% if produto.status_estoque == 'CRITICO' %}
+          <span class="semaphore-badge alta"><span class="dot"></span> Estoque Crítico</span>
+        {% elif produto.status_estoque == 'ATENCAO' %}
+          <span class="semaphore-badge media"><span class="dot"></span> Atenção</span>
+        {% else %}
+          <span class="semaphore-badge baixa"><span class="dot"></span> Estoque Normal</span>
+        {% endif %}
+      </div>
+      <h2 class="section-title">{{ produto.nome }}</h2>
+    </div>
+
+    <div class="filter-bar">
+      <a href="{% url 'estoque:consumo_produto' produto.id %}" class="btn btn-secondary btn-sm" id="btn-ver-grafico">
+        <span>📈</span> Ver Gráfico de Consumo
+      </a>
+      <a href="{% url 'estoque:movimentacao_nova' %}?produto_id={{ produto.id }}" class="btn btn-primary btn-sm" id="btn-nova-mov">
+        <span>➕</span> Nova Movimentação
+      </a>
+      <a href="{% url 'estoque:produto_lista' %}" class="btn btn-secondary btn-sm">
+        Voltar à Lista
+      </a>
+    </div>
+  </div>
+
+  <!-- Cards de Indicadores do Produto -->
+  <div class="kpi-grid" style="margin-bottom: 2rem;">
+    <div class="kpi-card {% if produto.status_estoque == 'CRITICO' %}urgent{% else %}normal{% endif %}">
+      <div class="kpi-info">
+        <h3>Saldo Calculado</h3>
+        <div class="kpi-value">{{ produto.saldo }} <span style="font-size: 1rem; font-weight: 500;">{{ produto.unidade }}</span></div>
+        <div class="kpi-sub">
+          Estoque mínimo: <strong>{{ produto.estoque_minimo|default:"Não definido" }} {{ produto.unidade }}</strong>
+        </div>
+      </div>
+      <div class="kpi-icon">📦</div>
+    </div>
+
+    <div class="kpi-card info">
+      <div class="kpi-info">
+        <h3>Cobertura Estimada</h3>
+        <div class="kpi-value">
+          {% if produto.cobertura_dias %}
+            ~{{ produto.cobertura_dias }} <span style="font-size: 1rem;">dias</span>
+          {% else %}
+            <span style="font-size: 1.15rem; color: var(--color-text-muted);">Não estimada</span>
+          {% endif %}
+        </div>
+        <div class="kpi-sub">
+          {% if produto.consumo_medio_diario %}
+            Consumo médio: {{ produto.consumo_medio_diario|floatformat:2 }} {{ produto.unidade }}/dia
+          {% else %}
+            Histórico recente insuficiente
+          {% endif %}
+        </div>
+      </div>
+      <div class="kpi-icon">⏱️</div>
+    </div>
+
+    <div class="kpi-card warning">
+      <div class="kpi-info">
+        <h3>Próximo Vencimento</h3>
+        <div class="kpi-value">
+          {% if produto.proxima_validade %}
+            {{ produto.proxima_validade|date:"d/m/Y" }}
+          {% else %}
+            <span style="font-size: 1.15rem; color: var(--color-text-muted);">Não informada</span>
+          {% endif %}
+        </div>
+        <div class="kpi-sub">
+          {% if produto.dias_para_vencer is not None %}
+            {% if produto.dias_para_vencer < 0 %}
+              <span style="color: var(--color-urgent-text); font-weight: 700;">Vencido há {{ produto.dias_para_vencer|stringformat:"d"|slice:"1:" }} dias</span>
+            {% else %}
+              Restam {{ produto.dias_para_vencer }} dia(s)
+            {% endif %}
+          {% else %}
+            Sem lote perecível cadastrado
+          {% endif %}
+        </div>
+      </div>
+      <div class="kpi-icon">⏳</div>
+    </div>
+
+    <div class="kpi-card normal">
+      <div class="kpi-info">
+        <h3>Valor em Estoque</h3>
+        <div class="kpi-value">
+          {% if produto.valor_total %}
+            R$ {{ produto.valor_total|floatformat:2 }}
+          {% else %}
+            <span style="font-size: 1.15rem; color: var(--color-text-muted);">-</span>
+          {% endif %}
+        </div>
+        <div class="kpi-sub">
+          Preço ref: {% if produto.preco_unitario %}R$ {{ produto.preco_unitario|floatformat:2 }}/{{ produto.unidade }}{% else %}Não informado{% endif %}
+        </div>
+      </div>
+      <div class="kpi-icon">💰</div>
+    </div>
+  </div>
+
+  <!-- Alertas Ativos deste Produto -->
+  {% if alertas_produto %}
+    <div style="margin-bottom: 2rem;">
+      <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.75rem;">Alertas Vinculados a este Insumo</h3>
+      <div class="alert-list">
+        {% for a in alertas_produto %}
+          <div class="alert-card {{ a.prioridade|lower }}">
+            <div class="alert-body">
+              <div class="alert-headline">
+                <span class="semaphore-badge {{ a.prioridade|lower }}">
+                  <span class="dot"></span> Prioridade {{ a.prioridade }}
+                </span>
+                <span class="category-tag">{{ a.tipo_display|default:a.tipo }}</span>
+              </div>
+              <p class="alert-justification">{{ a.justificativa }}</p>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Tabela de Lotes Registrados -->
+  {% if lotes %}
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3 style="font-size: 1.1rem; font-weight: 700;">Lotes e Validades (RF03.2)</h3>
+        <span class="badge-tag">{{ lotes|length }} lote(s) cadastrado(s)</span>
+      </div>
+
+      <div class="table-container" style="margin-bottom: 0;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Lote</th>
+              <th>Data de Validade</th>
+              <th>Qtd Registrada</th>
+              <th>Status do Lote</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for lote in lotes %}
+              <tr>
+                <td><strong>{{ lote.numero|default:"Lote não identificado" }}</strong></td>
+                <td>
+                  {% if lote.data_validade %}
+                    {{ lote.data_validade|date:"d/m/Y" }}
+                  {% else %}
+                    <span style="color: var(--color-text-light);">Não informada</span>
+                  {% endif %}
+                </td>
+                <td>{{ lote.quantidade }} {{ produto.unidade }}</td>
+                <td>
+                  {% if lote.vencido %}
+                    <span class="semaphore-badge alta"><span class="dot"></span> Vencido</span>
+                  {% elif lote.proximo_vencimento %}
+                    <span class="semaphore-badge media"><span class="dot"></span> Vence em breve</span>
+                  {% else %}
+                    <span class="semaphore-badge baixa"><span class="dot"></span> Regular</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Histórico de Movimentações -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <h3 style="font-size: 1.1rem; font-weight: 700;">Histórico de Movimentações</h3>
+      <span class="category-tag">Entradas e Saídas</span>
+    </div>
+
+    {% if movimentacoes %}
+      <div class="table-container" style="margin-bottom: 0;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Tipo</th>
+              <th>Quantidade</th>
+              <th>Lote</th>
+              <th>Destino / Finalidade</th>
+              <th>Responsável</th>
+              <th>Preço Unit.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in movimentacoes %}
+              <tr>
+                <td>{{ m.data|date:"d/m/Y" }}</td>
+                <td>
+                  {% if m.tipo == 'ENTRADA' %}
+                    <span class="semaphore-badge baixa" style="font-size: 0.72rem;">⬇️ Entrada</span>
+                  {% else %}
+                    <span class="semaphore-badge media" style="font-size: 0.72rem;">⬆️ Saída</span>
+                  {% endif %}
+                </td>
+                <td><strong>{{ m.quantidade }}</strong> {{ produto.unidade }}</td>
+                <td>{{ m.lote|default:"-" }}</td>
+                <td>{{ m.destino|default:"Uso geral" }}</td>
+                <td>{{ m.responsavel|default:"-" }}</td>
+                <td>{% if m.preco_unitario %}R$ {{ m.preco_unitario|floatformat:2 }}{% else %}-{% endif %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state" style="padding: 2rem 1rem;">
+        <p>Nenhuma movimentação registrada para este insumo.</p>
+        <a href="{% url 'estoque:movimentacao_nova' %}?produto_id={{ produto.id }}" class="btn btn-primary btn-sm">
+          Registrar Primeira Movimentação
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Transparência Metodológica (RN01, RN02, RN03) -->
+  <div class="disclaimer-box">
+    <span aria-hidden="true">💡</span>
+    <div>
+      <strong>Critério de Cálculo:</strong>
+      A estimativa de duração considera o consumo diário médio de saídas no período recente.
+      Caso haja menos de 5 movimentações ou ausência de saídas registradas, o sistema informa expressamente a incerteza estatística (RN03).
+    </div>
+  </div>
+
+</div>
+{% endblock %}
