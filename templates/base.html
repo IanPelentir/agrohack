@@ -25,34 +25,48 @@
   <!-- Barra Superior de Navegação -->
   <header class="app-header" role="banner">
     <div class="header-container">
-      <a href="{% url 'estoque:painel' %}" class="brand-wrapper" title="Ir para o Painel de Pendências">
-        <div class="brand-icon" aria-hidden="true">🌱</div>
+      <a href="{% url 'estoque:painel' %}" class="brand-wrapper" title="AGROGADO - Gestão Inteligente de Insumos e Manejo Bovino">
+        <div class="brand-icon" aria-hidden="true">🐂🌱</div>
         <div class="brand-text">
-          <h1>AgroHack</h1>
-          <span>Gestão Inteligente de Insumos</span>
+          <h1>AGROGADO</h1>
+          <span>Gestão Inteligente de Insumos & Manejo Bovino</span>
         </div>
       </a>
 
-      <nav class="main-nav" role="navigation" aria-label="Navegação Principal">
-        <a href="{% url 'estoque:painel' %}" class="nav-link {% if request.resolver_match.url_name == 'painel' %}active{% endif %}" id="nav-painel">
-          <span aria-hidden="true">📋</span> Painel de Pendências
-          {% if total_alertas_urgentes %}
-            <span class="nav-badge" title="{{ total_alertas_urgentes }} alertas urgentes">{{ total_alertas_urgentes }}</span>
-          {% endif %}
+      <div class="header-right-actions">
+        <!-- Botão de Simulação Sazonal em Destaque no Header -->
+        <a href="{% url 'estoque:painel' %}?seca={% if modo_seca %}0{% else %}1{% endif %}" 
+           class="btn-season-sim {% if modo_seca %}active-seca{% endif %}" 
+           id="btn-toggle-seca"
+           title="Clique para alternar a simulação do período de estiagem em Rondônia">
+          <span class="season-icon">{% if modo_seca %}☀️ Estiagem Ativa{% else %}🌧️ Época das Águas{% endif %}</span>
+          <span class="season-label">{% if modo_seca %}Modo Seca (Consumo 2x){% else %}Simular Início da Seca{% endif %}</span>
         </a>
-        <a href="{% url 'estoque:produto_lista' %}" class="nav-link {% if request.resolver_match.url_name == 'produto_lista' or request.resolver_match.url_name == 'produto_detalhe' %}active{% endif %}" id="nav-produtos">
-          <span aria-hidden="true">📦</span> Produtos
-        </a>
-        <a href="{% url 'estoque:consumo' %}" class="nav-link {% if request.resolver_match.url_name == 'consumo' %}active{% endif %}" id="nav-consumo">
-          <span aria-hidden="true">📈</span> Consumo Temporal
-        </a>
-        <a href="{% url 'estoque:importar' %}" class="nav-link {% if request.resolver_match.url_name == 'importar' %}active{% endif %}" id="nav-importar">
-          <span aria-hidden="true">📥</span> Importar Dados
-        </a>
-        <a href="{% url 'estoque:movimentacao_nova' %}" class="btn btn-sm btn-accent" id="nav-nova-movimentacao">
-          <span aria-hidden="true">➕</span> Movimentação
-        </a>
-      </nav>
+
+        <nav class="main-nav" role="navigation" aria-label="Navegação Principal">
+          <a href="{% url 'estoque:painel' %}" class="nav-link {% if request.resolver_match.url_name == 'painel' %}active{% endif %}" id="nav-painel">
+            <span aria-hidden="true">📋</span> Painel Geral
+            {% if total_alertas_urgentes %}
+              <span class="nav-badge" title="{{ total_alertas_urgentes }} alertas urgentes">{{ total_alertas_urgentes }}</span>
+            {% endif %}
+          </a>
+          <a href="{% url 'estoque:painel' %}#secao-lotes" class="nav-link" id="nav-lotes">
+            <span aria-hidden="true">🐂</span> Lotes de Gado
+          </a>
+          <a href="{% url 'estoque:produto_lista' %}" class="nav-link {% if request.resolver_match.url_name == 'produto_lista' or request.resolver_match.url_name == 'produto_detalhe' %}active{% endif %}" id="nav-produtos">
+            <span aria-hidden="true">📦</span> Insumos
+          </a>
+          <a href="{% url 'estoque:consumo' %}" class="nav-link {% if request.resolver_match.url_name == 'consumo' %}active{% endif %}" id="nav-consumo">
+            <span aria-hidden="true">📈</span> Consumo
+          </a>
+          <a href="{% url 'estoque:importar' %}" class="nav-link {% if request.resolver_match.url_name == 'importar' %}active{% endif %}" id="nav-importar">
+            <span aria-hidden="true">📥</span> Importar
+          </a>
+          <a href="{% url 'estoque:movimentacao_nova' %}" class="btn btn-sm btn-accent" id="nav-nova-movimentacao">
+            <span aria-hidden="true">➕</span> Movimentação
+          </a>
+        </nav>
+      </div>
     </div>
   </header>
 

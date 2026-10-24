@@ -771,6 +771,12 @@ body {
     flex-direction: column;
     align-items: flex-start;
   }
+  .header-right-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
   .main-nav {
     width: 100%;
     overflow-x: auto;
@@ -790,4 +796,1315 @@ body {
     flex-direction: column;
     text-align: center;
   }
+}
+
+/* ==========================================================================
+   AGROGADO - Design System & Componentes Especializados
+   ========================================================================== */
+
+/* Header Right Actions */
+.header-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+/* Botão de Simulação Sazonal no Header */
+.btn-season-sim {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.9rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-full);
+  color: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  backdrop-filter: blur(4px);
+  white-space: nowrap;
+}
+
+.btn-season-sim:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+
+.btn-season-sim.active-seca {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  border-color: #f59e0b;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.45);
+  animation: pulseSeca 2s infinite ease-in-out;
+}
+
+@keyframes pulseSeca {
+  0%, 100% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+  50% { box-shadow: 0 0 16px rgba(245, 158, 11, 0.75); }
+}
+
+/* 1. Hero Card do Dashboard */
+.dashboard-hero-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f4fbf6 100%);
+  border: 1px solid #d1e7dd;
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 1.75rem;
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .dashboard-hero-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hero-main-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.location-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-primary-light);
+  background: var(--color-primary-soft);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  width: fit-content;
+}
+
+.location-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #10b981;
+  border-radius: 50%;
+  animation: blink 2s infinite ease-in-out;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.hero-title {
+  font-size: 1.625rem;
+  font-weight: 800;
+  color: var(--color-primary-dark);
+  letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  max-width: 680px;
+}
+
+/* Caixa de Controle Sazonal */
+.seasonal-control-box {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-shadow: var(--shadow-sm);
+  min-width: 310px;
+}
+
+.seasonal-control-box.active-dry-season {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.season-status-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.season-badge-pill {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  display: inline-block;
+  width: fit-content;
+}
+
+.season-badge-pill.aguas {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.season-badge-pill.seca {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.season-sub {
+  font-size: 0.8125rem;
+  color: var(--color-text-main);
+}
+
+.season-help {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.35;
+}
+
+.season-actions {
+  margin-top: 0.25rem;
+}
+
+.pulse-animation {
+  transition: transform var(--transition-fast);
+}
+
+.pulse-animation:hover {
+  transform: translateY(-2px);
+}
+
+/* 2. KPIs AGROGADO Modernos */
+.agrogado-kpis {
+  margin-bottom: 2rem;
+}
+
+.agrotech-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.agrotech-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.kpi-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-light);
+  margin-bottom: 0.35rem;
+}
+
+.kpi-value-wrapper {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.kpi-unit {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.highlight-gold {
+  color: #b45309 !important;
+}
+
+.quote-trend-up {
+  color: #15803d;
+  font-weight: 700;
+}
+
+.kpi-mini-metric {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  background: #f8fafc;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  width: fit-content;
+}
+
+.kpi-icon-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.bovine-bg { background: #e0f2fe; }
+.stock-bg { background: #dcfce7; }
+.quote-bg { background: #fef3c7; }
+.alert-bg { background: #fee2e2; }
+
+.semaphore-counts {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0.25rem 0 0.5rem 0;
+}
+
+.badge-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.count-urgent { background: var(--color-urgent-bg); color: var(--color-urgent-text); }
+.count-warning { background: var(--color-warning-bg); color: var(--color-warning-text); }
+.count-normal { background: var(--color-normal-bg); color: var(--color-normal-text); }
+
+.alert-urgent-text {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.alert-normal-text {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+/* 3. Seções Gerais */
+.section-container {
+  margin-bottom: 2.5rem;
+}
+
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.section-badge {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-primary-light);
+  margin-bottom: 0.25rem;
+}
+
+.section-title {
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: var(--color-primary-dark);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-desc {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  max-width: 720px;
+}
+
+.filter-pills {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.pill-btn {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-main);
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-full);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.pill-btn:hover {
+  background: var(--color-surface-hover);
+  border-color: #cbd5e1;
+}
+
+.pill-btn.active {
+  background: var(--color-primary-dark);
+  color: #ffffff;
+  border-color: var(--color-primary-dark);
+}
+
+.pill-urgent.active {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+
+.pill-warning.active {
+  background: #d97706;
+  border-color: #d97706;
+  color: #ffffff;
+}
+
+.pill-normal.active {
+  background: #059669;
+  border-color: #059669;
+  color: #ffffff;
+}
+
+/* 4. To-Do List Grid */
+.todo-list-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.todo-card {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1.15rem 1.25rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1.15rem;
+  align-items: flex-start;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+}
+
+.todo-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.todo-card.priority-alta {
+  border-left: 6px solid #ef4444;
+}
+
+.todo-card.priority-media {
+  border-left: 6px solid #f59e0b;
+}
+
+.todo-card.priority-baixa {
+  border-left: 6px solid #10b981;
+}
+
+.todo-card.todo-done {
+  opacity: 0.45;
+  filter: grayscale(85%);
+  background: #f8fafc;
+}
+
+.todo-check-wrapper {
+  padding-top: 0.25rem;
+}
+
+.todo-checkbox {
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  accent-color: var(--color-primary);
+  border-radius: var(--radius-sm);
+}
+
+.todo-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.todo-header-tags {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.todo-category-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  background: #f1f5f9;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+}
+
+.todo-lote-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1e40af;
+  background: #dbeafe;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+}
+
+.todo-product-link {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  text-decoration: none;
+}
+
+.todo-product-link:hover {
+  text-decoration: underline;
+  color: var(--color-primary-accent);
+}
+
+.todo-product-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.todo-justification {
+  font-size: 0.9375rem;
+  color: var(--color-text-main);
+  line-height: 1.45;
+  background: #fbfcfb;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid #cbd5e1;
+}
+
+.todo-meta-strip {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.8125rem;
+}
+
+.meta-tag {
+  background: #f1f5f9;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+}
+
+.meta-tag.highlight-duration {
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 600;
+}
+
+.todo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 105px;
+}
+
+.btn-xs {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  text-align: center;
+  text-decoration: none;
+}
+
+.btn-outline {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-main);
+}
+
+.btn-outline:hover {
+  background: var(--color-surface-hover);
+}
+
+/* 5. Cards de Lotes de Gado (LoteAnimais) */
+.badge-cabecas-total {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  background: var(--color-primary-soft);
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-full);
+}
+
+.lotes-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.lote-animal-card {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.35rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.lote-animal-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.lote-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.lote-category-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-full);
+  display: inline-block;
+  margin-bottom: 0.35rem;
+}
+
+.badge-corte { background: #fed7aa; color: #9a3412; }
+.badge-leite { background: #bae6fd; color: #075985; }
+.badge-recria { background: #bbf7d0; color: #166534; }
+.badge-cria { background: #e0e7ff; color: #3730a3; }
+
+.lote-nome {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--color-text-main);
+}
+
+.lote-cabecas-pill {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-md);
+  text-align: center;
+  min-width: 75px;
+}
+
+.lote-cabecas-pill strong {
+  display: block;
+  font-size: 1.25rem;
+  color: var(--color-primary-dark);
+  line-height: 1;
+}
+
+.lote-cabecas-pill span {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+.lote-pasto-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  background: #f8fafc;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+}
+
+/* Régua Visual de Escore Corporal (ECC) */
+.ecc-meter-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ecc-meter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8125rem;
+}
+
+.ecc-label {
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.ecc-value-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.ecc-value-tag.ideal { background: #dcfce7; color: #15803d; }
+.ecc-value-tag.baixo { background: #fef3c7; color: #b45309; }
+.ecc-value-tag.alto { background: #e0e7ff; color: #4338ca; }
+
+.ecc-meter-track {
+  width: 100%;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.ecc-meter-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease;
+}
+
+.ecc-meter-fill.ideal { background: #10b981; }
+.ecc-meter-fill.baixo { background: #f59e0b; }
+.ecc-meter-fill.alto { background: #6366f1; }
+
+.ecc-meter-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.6875rem;
+  color: #94a3b8;
+}
+
+/* Suplementação no card do lote */
+.lote-suplemento-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  border-top: 1px dashed var(--color-border);
+  padding-top: 0.75rem;
+}
+
+.supl-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.supl-lbl {
+  color: var(--color-text-muted);
+}
+
+.supl-val {
+  text-align: right;
+  color: var(--color-text-main);
+}
+
+.supl-link {
+  color: var(--color-primary-light);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.badge-autonomia-critica {
+  background: #fee2e2;
+  color: #991b1b;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+}
+
+.badge-autonomia-atencao {
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+}
+
+.badge-autonomia-normal {
+  background: #dcfce7;
+  color: #166534;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+}
+
+.lote-obs {
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+  font-style: italic;
+  line-height: 1.35;
+}
+
+/* 6. Tabela de Insumos AGROGADO */
+.agrogado-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  background: #ffffff;
+}
+
+.agrogado-table th {
+  background: #f8fafc;
+  color: var(--color-text-muted);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.85rem 1rem;
+  border-bottom: 2px solid var(--color-border);
+  text-align: left;
+}
+
+.agrogado-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+  vertical-align: middle;
+}
+
+.agrogado-table tbody tr:hover {
+  background: #fbfdfa;
+}
+
+.insumo-name-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.product-title-link {
+  color: var(--color-primary-dark);
+  text-decoration: none;
+  font-size: 0.9375rem;
+}
+
+.product-title-link:hover {
+  text-decoration: underline;
+  color: var(--color-primary-accent);
+}
+
+.insumo-unit-pill {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-sm);
+  width: fit-content;
+}
+
+.badge-cat-grupo {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.badge-grupo-sanidade { background: #fee2e2; color: #991b1b; }
+.badge-grupo-nutricao { background: #fef3c7; color: #92400e; }
+.badge-grupo-manejo { background: #dcfce7; color: #166534; }
+
+.cat-sub-text {
+  display: block;
+  font-size: 0.6875rem;
+  color: var(--color-text-light);
+  margin-top: 0.15rem;
+}
+
+.insumo-saldo-cell {
+  min-width: 140px;
+}
+
+.saldo-destaque {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-primary-dark);
+}
+
+.saldo-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: var(--radius-full);
+  margin-top: 0.35rem;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+}
+
+.progress-fill.status-vermelho { background: #ef4444; }
+.progress-fill.status-amarelo { background: #f59e0b; }
+.progress-fill.status-verde { background: #10b981; }
+
+.cobertura-sub {
+  display: block;
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  margin-top: 0.2rem;
+}
+
+.validade-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.badge-val-vencido {
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-sm);
+  width: fit-content;
+}
+
+.badge-val-alerta {
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-sm);
+  width: fit-content;
+}
+
+.badge-val-ok {
+  background: #dcfce7;
+  color: #166534;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-sm);
+  width: fit-content;
+}
+
+.btn-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: #f1f5f9;
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: all var(--transition-fast);
+}
+
+.btn-action-icon:hover {
+  background: #e2e8f0;
+  transform: scale(1.1);
+}
+
+.btn-action-add:hover {
+  background: var(--color-primary-soft);
+}
+
+/* 7. Card de Transparência e Auditabilidade */
+.transparency-card {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  margin-top: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.transparency-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.transparency-header h4 {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--color-primary-dark);
+}
+
+.transparency-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+.color-critico { color: #dc2626; }
+.color-atencao { color: #d97706; }
+.color-normal { color: #16a34a; }
+
+/* ==========================================================================
+   AGROGADO - Controles Intuitivos de Gado e Insumos
+   ========================================================================== */
+
+/* Alternador de Visualização (Cards vs Tabela) */
+.view-toggle-group {
+  display: inline-flex;
+  background: #f1f5f9;
+  padding: 0.2rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+}
+
+.view-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.view-toggle-btn:hover {
+  color: var(--color-text-main);
+}
+
+.view-toggle-btn.active {
+  background: #ffffff;
+  color: var(--color-primary-dark);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Barra de Ferramentas e Busca Amigável */
+.toolbar-card {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.toolbar-search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-full);
+  padding: 0.35rem 0.85rem;
+  min-width: 280px;
+  flex: 1;
+  max-width: 450px;
+  transition: border-color var(--transition-fast);
+}
+
+.toolbar-search-box:focus-within {
+  border-color: var(--color-primary);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.12);
+}
+
+.search-icon {
+  font-size: 0.875rem;
+  color: var(--color-text-light);
+}
+
+.search-input {
+  border: none;
+  background: transparent;
+  width: 100%;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: var(--color-text-main);
+  outline: none;
+}
+
+.toolbar-pills {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.toolbar-quick-status {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.btn-status-filter {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: #ffffff;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-status-filter:hover {
+  background: #f8fafc;
+}
+
+.btn-status-filter.active {
+  background: var(--color-primary-dark);
+  color: #ffffff;
+  border-color: var(--color-primary-dark);
+}
+
+/* Faixa de Mini-Resumo do Rebanho */
+.bovine-summary-strip {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.summary-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #f1f5f9;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-full);
+  font-size: 0.8125rem;
+  color: var(--color-text-main);
+}
+
+.pill-icon {
+  font-size: 0.9375rem;
+}
+
+/* Card do Lote Enriquecido */
+.lote-card-top-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-icon-subtle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: #f8fafc;
+  border: 1px solid var(--color-border);
+  text-decoration: none;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  transition: all var(--transition-fast);
+}
+
+.btn-icon-subtle:hover {
+  background: #e2e8f0;
+  color: var(--color-text-main);
+  transform: scale(1.05);
+}
+
+.lote-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 0.75rem;
+  margin-top: auto;
+}
+
+.badge-cabecas-cell {
+  display: inline-block;
+  background: #f1f5f9;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-primary-dark);
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid #e2e8f0;
+}
+
+.sub-cell-text {
+  font-size: 0.6875rem;
+  color: var(--color-text-light);
+  margin-top: 0.15rem;
+}
+
+.pulse-fast {
+  animation: pulseCritico 1.5s infinite;
+}
+
+@keyframes pulseCritico {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.75; transform: scale(0.97); }
+}
+
+/* Cards de Resumo dos 3 Grupos de Insumos */
+.insumos-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.insumo-group-card {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.insumo-group-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.insumo-group-card.sanidade { border-top: 4px solid #ef4444; }
+.insumo-group-card.nutricao { border-top: 4px solid #f59e0b; }
+.insumo-group-card.manejo { border-top: 4px solid #10b981; }
+
+.group-icon-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+}
+
+.sanidade-circle { background: #fee2e2; }
+.nutricao-circle { background: #fef3c7; }
+.manejo-circle { background: #dcfce7; }
+
+.group-card-content h4 {
+  font-size: 1.0625rem;
+  font-weight: 800;
+  color: var(--color-text-main);
+  margin: 0.15rem 0 0.25rem 0;
+}
+
+.group-card-content p {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.group-label {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-light);
+}
+
+.group-card-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-primary-light);
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+/* Célula de Saldo */
+.saldo-value-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.saldo-unit {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+/* Modais Interativos */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-card {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  animation: modalEntrada 0.2s ease-out;
+}
+
+@keyframes modalEntrada {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--color-primary-dark);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-close-modal {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  color: var(--color-text-light);
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.btn-close-modal:hover {
+  background: #f1f5f9;
+  color: var(--color-text-main);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: 1rem;
 }

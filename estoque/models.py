@@ -92,6 +92,75 @@ class Movimentacao(models.Model):
         verbose_name_plural = "Movimentações"
         ordering = ['-data_movimentacao', '-id']
 
+    def clean(self):
+        super().clean()
+        if self.tipo == 'SAIDA' and self.quantidade is not None and getattr(self, 'produto_id', None):
+            saldo = self.produto.saldo_atual
+            if self.pk:
+                antiga = Movimentacao.objects.filter(pk=self.pk).first()
+                if antiga and antiga.tipo == 'SAIDA':
+                    saldo += antiga.quantidade
+            if self.quantidade > saldo:
+                from django.core.exceptions import ValidationError
+                raise ValidationError(
+                    f"Operação não permitida (RN01.1): Saída de {self.quantidade} {self.produto.unidade} "
+                    f"excede o saldo disponível ({saldo} {self.produto.unidade})."
+                )
+
     def __str__(self):
         return f"{self.get_tipo_display()} de {self.quantidade} {self.produto.unidade} em {self.data_movimentacao}"
+
+
+class LoteAnimais(models.Model):
+    CATEGORIAS = [
+        ('CORTE', 'Gado de Corte'),
+        ('LEITE', 'Gado de Leite'),
+        ('CRIA', 'Cria / Bezerros'),
+        ('RECRIA', 'Recria / Garrotes'),
+        ('ENGORDA', 'Terminação / Engorda'),
+    ]
+
+    nome = models.CharField(max_length=120, unique=True, verbose_name="Identificação do Lote")
+    categoria = models.CharField(max_length=40, choices=CATEGORIAS, default='CORTE', verbose_name="Categoria")
+    quantidade_cabecas = models.PositiveIntegerField(verbose_name="Quantidade de Cabeças")
+    pasto_localizacao = models.CharField(max_length=120, verbose_name="Pasto / Localização")
+    escore_corporal = models.DecimalField(max_digits=3, decimal_places=1, default=Decimal('3.0'), verbose_name="Escore Corporal (ECC 1-5)")
+    peso_medio_estimado = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, verbose_name="Peso Médio Estimado (kg)")
+    consumo_diario_cabeca = models.DecimalField(max_digits=6, decimal_places=3, default=Decimal('0.120'), verbose_name="Consumo Diário por Cabeça (kg/dia)")
+    insumo_suplementar = models.ForeignKey(Produto, on_delete=models.SET_NULL, null=True, blank=True, related_name='lotes_consumidores', verbose_name="Insumo Suplementar Vinculado")
+    observacoes = models.TextField(blank=True, verbose_name="Observações do Manejo")
+    ativo = models.BooleanField(default=True, verbose_name="Ativo")
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Lote de Animais"
+        verbose_name_plural = "Lotes de Animais"
+        ordering = ['nome']
+
+    def __str__(self):
+        return f"{self.nome} ({self.quantidade_cabecas} cab) - {self.pasto_localizacao}"
+
+    @property
+    def consumo_diario_total_kg(self):
+        """Consumo diário total do lote em kg."""
+        return Decimal(str(self.quantidade_cabecas)) * self.consumo_diario_cabeca
+
+    def duracao_estimada_insumo(self, fator_seca=Decimal('1.0')):
+        """Calcula dias restantes de insumo suplementar para este lote."""
+        if not self.insumo_suplementar:
+            return None
+        saldo = self.insumo_suplementar.saldo_atual
+        if saldo <= 0:
+            return 0
+        unidade = self.insumo_suplementar.unidade.lower()
+        saldo_kg = saldo
+        if 'sc' in unidade or 'saco' in unidade:
+            saldo_kg = saldo * Decimal('30.0')
+        consumo_dia = self.consumo_diario_total_kg * fator_seca
+        if consumo_dia <= 0:
+            return None
+        import math
+        return math.ceil(float(saldo_kg / consumo_dia))
+
 

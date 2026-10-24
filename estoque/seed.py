@@ -13,13 +13,14 @@ Gera ~80 registros contemplando as 8 categorias do desafio e os casos de teste:
 
 from datetime import date, timedelta
 from decimal import Decimal
-from .models import Produto, Lote, Movimentacao
+from .models import Produto, Lote, Movimentacao, LoteAnimais
 
 
 def popular_dados_demonstracao():
     # Limpa dados existentes para garantir idempotência na demonstração
     Movimentacao.objects.all().delete()
     Lote.objects.all().delete()
+    LoteAnimais.objects.all().delete()
     Produto.objects.all().delete()
 
     hoje = date.today()
@@ -310,6 +311,57 @@ def popular_dados_demonstracao():
             data_movimentacao=hoje - timedelta(days=dias),
             destino="Dessecação Talhões 01 a 05", responsavel="Carlos Tratorista"
         )
+
+    # =========================================================================
+    # LOTES DE ANIMAIS (Manejo Bovino - Corte, Leite, Recria, Cria)
+    # =========================================================================
+    LoteAnimais.objects.create(
+        nome="Lote 01 - Garrotes Nelore",
+        categoria="CORTE",
+        quantidade_cabecas=150,
+        pasto_localizacao="Pasto Piquete 04 (Brachiaria)",
+        escore_corporal=Decimal("3.2"),
+        peso_medio_estimado=Decimal("380.00"),
+        consumo_diario_cabeca=Decimal("0.120"),
+        insumo_suplementar=p_sal,
+        observacoes="Garrotes em fase de recria e engorda a pasto com suplementação mineral diária."
+    )
+
+    LoteAnimais.objects.create(
+        nome="Lote 02 - Vacas em Lactação Girolando",
+        categoria="LEITE",
+        quantidade_cabecas=85,
+        pasto_localizacao="Piquete Rotacionado 01 (Mombaça)",
+        escore_corporal=Decimal("3.8"),
+        peso_medio_estimado=Decimal("520.00"),
+        consumo_diario_cabeca=Decimal("0.150"),
+        insumo_suplementar=p_sal,
+        observacoes="Plantel leiteiro de alta produção (Bacia Leiteira Ariquemes/RO). Suplementação mineral + volumoso."
+    )
+
+    LoteAnimais.objects.create(
+        nome="Lote 03 - Novilhas Sobreamano",
+        categoria="RECRIA",
+        quantidade_cabecas=120,
+        pasto_localizacao="Pasto Piquete 07 (Marandu)",
+        escore_corporal=Decimal("3.0"),
+        peso_medio_estimado=Decimal("310.00"),
+        consumo_diario_cabeca=Decimal("0.100"),
+        insumo_suplementar=p_sal,
+        observacoes="Lote de reposição de matrizes para a próxima estação de monta."
+    )
+
+    LoteAnimais.objects.create(
+        nome="Lote 04 - Bezerros Desmama",
+        categoria="CRIA",
+        quantidade_cabecas=105,
+        pasto_localizacao="Piquete Maternidade e Retiro",
+        escore_corporal=Decimal("2.8"),
+        peso_medio_estimado=Decimal("190.00"),
+        consumo_diario_cabeca=Decimal("0.080"),
+        insumo_suplementar=p_sal,
+        observacoes="Bezerros recém-desmamados. Requer atenção ao ECC e imunização preventiva."
+    )
 
     total_movs = Movimentacao.objects.count()
     return total_movs

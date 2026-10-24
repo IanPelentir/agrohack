@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }} | AGROGADO{% endblock %}
+
+{% block content %}
+<div class="movement-form-container">
+  <div class="section-header">
+    <div>
+      <h2 class="section-title">
+        <span>🐂</span> {{ titulo }}
+      </h2>
+      <p class="section-desc">
+        Informe os dados do lote, pasto, Escore Corporal (ECC) e insumo suplementar para sincronização com o estoque.
+      </p>
+    </div>
+    <div>
+      <a href="{% url 'estoque:painel' %}#secao-lotes" class="btn btn-secondary btn-sm">
+        Voltar ao Painel
+      </a>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <form method="post" id="form-lote">
+      {% csrf_token %}
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="id_nome">Identificação do Lote *</label>
+          {{ form.nome }}
+          <div class="form-help">Ex: Lote 05 - Garrotes Nelore, Lote 06 - Matrizes Leiteiras</div>
+        </div>
+
+        <div class="form-group">
+          <label for="id_categoria">Categoria Zootécnica *</label>
+          {{ form.categoria }}
+          <div class="form-help">Finalidade produtiva do lote na propriedade.</div>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="id_quantidade_cabecas">Quantidade de Cabeças *</label>
+          {{ form.quantidade_cabecas }}
+          <div class="form-help">Número de animais presentes no lote.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="id_pasto_localizacao">Pasto / Piquete / Localização *</label>
+          {{ form.pasto_localizacao }}
+          <div class="form-help">Pasto atual de pastejo ou piquete rotacionado.</div>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="id_escore_corporal">Escore de Condição Corporal (ECC 1.0 a 5.0) *</label>
+          {{ form.escore_corporal }}
+          <div class="form-help">1 = Muito Magro | 3 = Ideal | 5 = Sobrepeso.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="id_peso_medio_estimado">Peso Médio Estimado (kg)</label>
+          {{ form.peso_medio_estimado }}
+          <div class="form-help">Peso vivo médio por cabeça para cálculo de arrobas.</div>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label for="id_consumo_diario_cabeca">Consumo Diário por Cabeça (kg/dia) *</label>
+          {{ form.consumo_diario_cabeca }}
+          <div class="form-help">Ex: 0.120 kg/dia para Sal Mineral simples, 0.250 kg/dia na seca.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="id_insumo_suplementar">Insumo Suplementar Vinculado</label>
+          {{ form.insumo_suplementar }}
+          <div class="form-help">Insumo cuja autonomia de dias será calculada pelo consumo deste lote.</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="id_observacoes">Observações de Manejo e Sanidade</label>
+        {{ form.observacoes }}
+        <div class="form-help">Histórico de vacinação, vermifugação ou particularidades.</div>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <a href="{% url 'estoque:painel' %}#secao-lotes" class="btn btn-secondary">
+          Cancelar
+        </a>
+        <button type="submit" class="btn btn-primary" id="btn-salvar-lote">
+          <span>💾</span> Salvar Lote de Animais
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

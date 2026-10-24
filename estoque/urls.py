@@ -22,4 +22,9 @@ urlpatterns = [
 
     # RF01.3: Registro de movimentação para reanálise
     path('movimentacoes/nova/', views.movimentacao_nova, name='movimentacao_nova'),
+
+    # Gestão Amigável de Lotes de Gado (LoteAnimais)
+    path('lotes/novo/', views.lote_novo, name='lote_novo'),
+    path('lotes/<int:pk>/editar/', views.lote_editar, name='lote_editar'),
+    path('lotes/<int:pk>/excluir/', views.lote_excluir, name='lote_excluir'),
 ]

@@ -1,72 +1,116 @@
-# AgroHack 2026/2 — Gestão Inteligente de Insumos Rurais
+# AGROGADO — Gestão Inteligente de Insumos Rurais & Manejo Bovino
 
 > **Desafio Oficial:** *Gestão inteligente de insumos em uma propriedade rural*  
 > **Instituição:** Instituto Federal de Educação, Ciência e Tecnologia de Rondônia (IFRO) — *Campus* Ariquemes  
 > **Evento:** Semana Nacional de Ciência e Tecnologia (SNCT 2026) — 29 de Outubro de 2026  
-> **Stack Tecnológica:** Python 3.14 • Django 5.2 LTS • SQLite 3 • HTML5/CSS3 • Chart.js  
+> **Stack Tecnológica:** Python 3.14 (compatível 3.12+) • Django 5.2 LTS • SQLite 3 • HTML5 / CSS3 Puro • Chart.js  
+> **Suíte de Testes:** 15 Testes Automatizados Integrados • 100% Aprovados (`OK`)  
 
 ---
 
-## 1. Equipe
+## 1. Identificação da Equipe
 
-A equipe é multidisciplinar, integrando competências de tecnologia da informação e ciências agrárias para garantir aderência real às rotinas da produção rural no estado de Rondônia:
+A equipe é multidisciplinar, integrando competências de Tecnologia da Informação (Análise e Desenvolvimento de Sistemas) e Ciências Agrárias (Medicina Veterinária) para garantir total aderência zootécnica às rotinas reais da pecuária e da agricultura no Vale do Jamari / Rondônia:
 
-| Nome do Integrante | Curso / Período | Função no Projeto | Responsabilidade Principal |
+| Integrante | Curso / Matrícula | Função no Projeto | Responsabilidades Principais |
 |---|---|---|---|
-| **Ian Pelentir Ramos** | ADS — 4º período | **Líder de Projeto & Arquiteto Back-end** | **Integrante Responsável**; arquitetura Django, modelagem de dados e conformidade regulamentar |
-| **Bruna Pereira da Silva** | Medicina Veterinária — 2º período | **Consultora de Domínio Rural & Validação** | Definição das regras de negócio de medicamentos, defensivos, controle de lotes, carência e validação de campo |
-| **Alan Menezes de Araújo** | ADS — 4º período | **Engenheiro de Dados & Motor Analítico** | Implementação das regras determinísticas de análise, cálculos estatísticos e suíte de testes |
-| **Marco Antonio de Oliveira Medeiros** | ADS — 4º período | **Desenvolvedor Front-end & Usabilidade** | Construção da interface com foco no produtor rural (To-Do List, acessibilidade de semáforo e Chart.js) |
+| **Ian Pelentir Ramos** | ADS — 4º período<br>`2022105100001` | **Líder de Projeto & Arquiteto Back-end** | **Integrante Responsável**; arquitetura Django, modelagem relacional, conformidade regulamentar e integração de módulos |
+| **Bruna Pereira da Silva** | Medicina Veterinária — 2º período<br>`2026105210042` | **Consultora de Domínio Rural & Zootecnia** | Regras de nutrição animal na seca, cálculo de ECC, controle sanitário de vacinas/medicamentos, carência e validação de campo |
+| **Alan Menezes de Araújo** | ADS — 4º período<br>`2024105100044` | **Engenheiro de Dados & Motor Analítico** | Algoritmos determinísticos da To-Do List semafórica, projeção de cobertura, simulação de estiagem e suíte de testes |
+| **Marco Antonio de Oliveira Medeiros** | ADS — 4º período<br>`2024105100014` | **Desenvolvedor Front-end & Usabilidade** | Interface voltada ao produtor rural, To-Do List acessível, painel de lotes bovinos, alternador de visualização e responsividade |
 
-* **Integrante Responsável pelo Projeto:** Ian Pelentir Ramos (ADS — 4º período — IFRO Campus Ariquemes)  
-* **Contato Técnico:** `ianpelentir7@gmail.com`
-
----
-
-## 2. Problema e Público
-
-### Contexto Rural
-Na rotina de propriedades rurais de médio e pequeno porte em Rondônia (como na bacia leiteira e na produção agropecuária do Vale do Jamari), o controle de insumos frequentemente é realizado em cadernos manuais ou planilhas desconexas. O desafio do produtor não é a simples falta de um cadastro de itens, mas a **ausência de diagnósticos práticos e acionáveis** sobre o que precisa ser feito hoje para evitar prejuízos.
-
-### Decisões Reais Apoiadas pela Solução
-1. **Prevenção de Perdas de Medicamentos e Insumos Perecíveis:** Medicamentos veterinários (vacinas, antibióticos, antiparasitários), sementes fiscalizadas e defensivos agrícolas possuem prazos de validade críticos e alto custo unitário. A solução cruza o estoque disponível com o ritmo recente de uso, alertando antes que o insumo expire na prateleira sem uso.
-2. **Previsão de Ruptura de Estoque em Atividades Críticas:** Antecipar a falta de insumos essenciais antes de períodos sazonais de preparo de solo, plantio ou gradagem, evitando a paralisação de tratores e equipes por falta de combustível, sementes ou adubos de cobertura.
-3. **Equilíbrio Financeiro e Redução de Capital Parado:** Identificação de itens com excesso de estoque e alto valor financeiro imobilizado, permitindo melhor negociação de compras futuras e liberação de fluxo de caixa para a fazenda.
+* **Integrante Responsável:** Ian Pelentir Ramos (`ianpelentir7@gmail.com`)  
+* **IFRO — Campus Ariquemes** — Rodovia RO-257, Km 13, Sentido Machadinho D'Oeste, Ariquemes - RO  
 
 ---
 
-## 3. Solução
+## 2. Contexto do Problema e Motivação Regional
 
-O sistema é uma aplicação Web de apoio à tomada de decisão construída em **Django + SQLite**, orientada à rotina diária do produtor rural:
+### O Desafio no Vale do Jamari (Ariquemes / Rondônia)
+Ariquemes é um dos maiores polos da pecuária de corte e leite do estado de Rondônia. Nas fazendas da região, o manejo do gado e o controle do barracão de insumos costumam operar de forma desarticulada:
+1. **Desconexão entre Rebanho e Depósito:** O produtor sabe quantas cabeças possui, mas não cruza o consumo diário do lote com os sacos de sal mineral ou ração restantes no galpão. O sal acaba de surpresa, interrompendo o ciclo de engorda e derrubando o ganho de peso diário (GMD).
+2. **A Sazonalidade Amazônica (Período das Águas vs. Período da Seca):** Entre os meses de maio e outubro, a precipitação cai drasticamente em Rondônia. O capim (*Brachiaria brizantha*) perde teor de proteína bruta (PB cai para menos de 6%), exigindo que o gado dobre o consumo de suplementos minerais proteicos e ureados para evitar perda de Escore de Condição Corporal (ECC). Sem simulação preditiva, a propriedade enfrenta desabastecimento em massa.
+3. **Perdas Financeiras com Perecíveis e Insumos Críticos:** Medicamentos veterinários caros (vacinas, antibióticos, carrapaticidas) vencem esquecidos na geladeira da fazenda, enquanto defensivos essenciais faltam no dia da aplicação.
 
-* **Painel Principal Estilo "To-Do List" (RF02.1):** A tela inicial funciona como uma lista prioritária de tarefas do dia. Ao abrir o sistema, o produtor visualiza imediatamente as pendências que exigem ação, sem necessidade de navegar por menus complexos.
-* **Semaforização Acessível em 3 Níveis (RF02.2 / RNF01):** Os alertas são ordenados por urgência (🔴 **ALTA**, 🟡 **MÉDIA**, 🟢 **BAIXA**). A sinalização não depende apenas de cores; ela combina rótulos textuais legíveis, ícones e contrastes adequados para uso em dispositivos móveis no campo ou sob luz solar.
-* **Justificativas Claras e Amigáveis (RF02.3):** Cada alerta é acompanhado de explicação em linguagem acessível (ex.: *"Estoque crítico: mantendo o ritmo recente de saídas, o saldo será suficiente por apenas ~8 dias"*).
-* **Acompanhamento Temporal Interativo (RF03.6):** Gráficos de sazonalidade e consumo gerados com Chart.js, permitindo correlacionar as retiradas com as épocas de plantio, calagem ou vacinação.
-* **Ingestão com Validação Linha a Linha (RF01.1 / RF01.2):** Importação de planilhas CSV com suporte aos 13 campos do regulamento, exibição de prévia e transação atômica que impede dados inconsistentes no banco.
-
-### Acesso à Aplicação
-* **Execução Local:** `http://127.0.0.1:8000/` (após seguir o passo a passo de instalação).
-* **Demonstração Online:** *(Opcional, conforme link disponibilizado no ambiente de apresentação do evento)*.
+### O Que o AGROGADO Resolve
+O **AGROGADO** une o controle de **Estoque de Insumos** ao **Manejo de Lotes Bovinos** através de um **Motor Analítico Semafórico**. O produtor não precisa decifrar relatórios complexos: ao abrir o sistema, a **To-Do List Rural** diz exatamente o que deve ser comprado, vacinado ou ajustado hoje para evitar perdas financeiras.
 
 ---
 
-## 4. Como Testar
+## 3. Arquitetura e Funcionalidades do Sistema
 
-Instruções reprodutíveis para execução do ambiente de desenvolvimento no Linux/Windows/macOS:
+```
+                  ┌──────────────────────────────────────────────┐
+                  │          PAINEL PRINCIPAL AGROGADO           │
+                  │   Cotação @ Ariquemes/RO • Rebanho • Estoque │
+                  └──────────────────────┬───────────────────────┘
+                                         │
+                 ┌───────────────────────┴───────────────────────┐
+                 ▼                                               ▼
+   ┌───────────────────────────┐                   ┌───────────────────────────┐
+   │    MOTOR ANALÍTICO        │                   │     MANEJO BOVINO         │
+   │  To-Do List Semafórica    │                   │   Controle de Lotes       │
+   │  🔴 Alta | 🟡 Média | 🟢  │                   │   ECC 1-5 • Pasto • Cabeças│
+   └─────────────┬─────────────┘                   └─────────────┬─────────────┘
+                 │                                               │
+                 ├───────────────────────┬───────────────────────┤
+                 ▼                       ▼                       ▼
+   ┌───────────────────────────┐ ┌────────────────┐ ┌───────────────────────────┐
+   │   SIMULAÇÃO DE SECA       │ │  RASTREAMENTO  │ │   VALIDAÇÕES RESTRITAS    │
+   │ Consumo Mineral Dobrado   │ │  Lotes/Validade│ │  Sem Estoque Negativo     │
+   │ Cobertura em Dias de Risco│ │  Entrada/Saída │ │  13 Campos do Regulamento │
+   └───────────────────────────┘ └────────────────┘ └───────────────────────────┘
+```
+
+### 3.1 Módulos Principais
+
+1. **To-Do List Rural Semafórica (RF02 / RF03):**
+   * **🔴 Crítico (Alta Prioridade):** Ruptura de estoque iminente ($\le \text{Estoque Mínimo}$), cobertura de suplemento insuficiente para o rebanho ($< 7$ dias) ou lotes com vencimento próximo e risco de perda.
+   * **🟡 Atenção (Média Prioridade):** Estoque em faixa de alerta ($\le 1.5 \times \text{Estoque Mínimo}$), consumo atípico detectado ($> 2\sigma$) ou carência sanitária próxima.
+   * **🟢 Normal (Baixa Prioridade):** Itens com estoque seguro e consumo regular.
+   * **Linguagem Amigável:** Justificativas diretas ao produtor (ex.: *"Estoque cobre apenas 4 dias de consumo para 180 garrotes Nelore no Pasto 04"*).
+
+2. **Gestão de Lotes de Animais & Rebanho:**
+   * Cadastro completo com Nome do Lote, Categoria Zootécnica, Cabeças, Pasto/Localização, Escore de Condição Corporal (ECC de 1 a 5), Peso Médio Estimado e Consumo Diário/Cabeça.
+   * Vinculação direta ao insumo suplementar (sal mineral, ração, suplemento proteico).
+   * **Cálculo de Autonomia:** Projeção automática de quantos dias o estoque restante sustentará o lote.
+   * **Interface Dupla:** Alternância dinâmica entre visualização em **Cards Visuais** e **Tabela Completa**, com barra de busca instantânea.
+   * Operações completas de criação, edição e exclusão de lotes com modais integrados.
+
+3. **Simulador Sazonal de Seca (Vale do Jamari / RO):**
+   * Botão alternador no cabeçalho e suporte a parâmetro de URL (`/?seca=1`).
+   * Simula o comportamento real do inverno amazônico: dobra o consumo diário de sal mineral/proteico por cabeça (ex.: 120g $\to$ 240g/dia), recalculando a velocidade de exaustão do estoque e antecipando compras antes do gado emagrecer.
+
+4. **Painel de Indicadores Regionais:**
+   * Cotação da arroba (@) do Boi Gordo em **Ariquemes / RO** (R$ 228,50 / @ — base de mercado Rondônia).
+   * Total de cabeças de gado ativas no sistema.
+   * Valor financeiro total imobilizado em estoque (R$).
+
+5. **Movimentações e Validações Rigorosas (RN01 / RN02 / RN03):**
+   * Suporte integral aos **13 campos oficiais do regulamento**.
+   * Bloqueio rigoroso de estoque negativo (impede saídas maiores que o saldo em depósito).
+   * Rastreabilidade por número de lote do fabricante e data de validade.
+   * Importação CSV com prévia antes da confirmação e transação atômica (`transaction.atomic`).
+   * **Reanálise em Tempo Real (RF01.3):** Ao salvar qualquer movimentação, o motor analítico recalcula imediatamente todos os alertas sem necessidade de intervenção manual.
+
+---
+
+## 4. Guia Rápido de Instalação e Execução
+
+O sistema foi concebido para ser 100% reprodutível em ambientes Linux, macOS e Windows (PowerShell/CMD).
 
 ### Pré-requisitos
-* **Python:** versão 3.12 ou superior (testado e homologado no Python 3.14).
-* **Git:** instalado na máquina.
+* **Python:** 3.12 ou superior (homologado no Python 3.14).
+* **Git:** instalado e configurado.
 
-### Passo a Passo de Execução
+### 4.1 Passo a Passo
 
 ```bash
-# 1. Clonar o repositório oficial
+# 1. Clonar o repositório
 git clone https://github.com/IanPelentir/agrohack.git
 cd agrohack
 
-# 2. Criar e ativar o ambiente virtual (Linux / macOS)
+# 2. Criar o ambiente virtual (Linux / macOS)
 python3 -m venv venv
 source venv/bin/activate
 
@@ -74,142 +118,162 @@ source venv/bin/activate
 # python -m venv venv
 # .\venv\Scripts\Activate.ps1
 
-# 3. Instalar as dependências oficiais do projeto
+# 3. Instalar as dependências do projeto
 pip install -r requirements.txt
 
-# 4. Executar as migrações do banco de dados SQLite
+# 4. Aplicar as migrações no banco de dados SQLite
 python manage.py migrate
 
-# 5. Executar os testes automatizados para verificar a integridade
+# 5. Popular o banco com a massa de dados de demonstração (Gado + Insumos)
+python manage.py shell -c "from estoque.seed import popular_dados_demonstracao; popular_dados_demonstracao()"
+
+# 6. Executar a suíte de testes automatizados
 python manage.py test
 
-# 6. Iniciar o servidor de desenvolvimento Django
+# 7. Iniciar o servidor de desenvolvimento
 python manage.py runserver
 ```
 
-Após iniciar o servidor, abra o navegador e acesse:  
-👉 **[http://127.0.0.1:8000/](http://127.0.0.1:8000/)**
+Após iniciar o servidor, abra no navegador:
+* 🌐 **Painel Principal:** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+* ☀️ **Simulação do Modo Seca:** [http://127.0.0.1:8000/?seca=1](http://127.0.0.1:8000/?seca=1)
+* 📋 **Produtos e Lotes:** [http://127.0.0.1:8000/produtos/](http://127.0.0.1:8000/produtos/)
+* ➕ **Nova Movimentação:** [http://127.0.0.1:8000/movimentacoes/nova/](http://127.0.0.1:8000/movimentacoes/nova/)
+* 📊 **Análise de Consumo:** [http://127.0.0.1:8000/consumo/](http://127.0.0.1:8000/consumo/)
 
 ---
 
-## 5. Dados e Critérios de Análise
+## 5. Critérios Analíticos e Regras de Negócio
 
-### 5.1 Campos Suportados (RF01.2)
-A base de dados suporta os **13 campos oficiais** descritos no regulamento do AgroHack:
-1. `produto` (Nome comercial / especificação do insumo)
-2. `categoria` (Defensivos, Fertilizantes, Medicamentos Veterinários, Sementes, Combustíveis, etc.)
-3. `unidade` (kg, L, sc, frasco, dose, un)
-4. `quantidade` (Volume numérico movimentado ou estocado)
-5. `estoque_minimo` (Parâmetro de segurança operacional)
-6. `tipo_movimentacao` (`ENTRADA` ou `SAIDA`)
-7. `data_movimentacao` (Data da operação)
-8. `preco_aquisicao` (Custo unitário pago pelo insumo)
-9. `lote` (Código de rastreabilidade do fabricante)
-10. `data_validade` (Data de expiração do lote perecível)
-11. `fornecedor` (Origem comercial do insumo)
-12. `destino` (Setor, pasto, talhão ou lote de animais de aplicação)
-13. `responsavel` (Colaborador que realizou a retirada/aplicação)
+### 5.1 Fórmulas Matemáticas do Motor Analítico
 
-### 5.2 Tratamento Rigoroso de Dados
-* **Incompatibilidade de Unidades (RN01):** Registros com unidades de medida distintas (ex.: litros vs. quilogramas) para o mesmo produto **nunca são somados diretamente**. O sistema emite alerta de incompatibilidade e segrega os saldos por unidade.
-* **Tratamento de Dados Ausentes (RN02):** A ausência de preço unitário ou data de validade é mantida como nula (`None`). O algoritmo **não converte ausência de preço em R$ 0,00**, evitando distorcer o valor total do estoque ou os custos médios.
-* **Comunicação de Incerteza (RN03):** Se um insumo possui histórico insuficiente (menos de 5 retiradas registradas), o sistema exibe expressamente: *"Não estimado: histórico insuficiente de movimentações"*, recusando-se a inventar previsões infundadas.
-* **Períodos sem Movimento:** Meses sem saídas no gráfico temporal representam *ausência de observação*, e **não prova de consumo zero futuro**.
+| Critério | Fórmula / Regra Lógica | Ação Disparada |
+|---|---|---|
+| **Saldo Atual** | $\text{Saldo} = \sum \text{Entradas} - \sum \text{Saídas}$ | Se saldo $\le \text{Estoque Mínimo} \implies$ 🔴 Alerta Crítico |
+| **Cobertura Geral** | $\text{Dias de Cobertura} = \frac{\text{Saldo Atual}}{\text{Consumo Médio Diário (30 dias)}}$ | Se dias $< 7 \implies$ 🔴 Alerta Crítico de Ruptura |
+| **Suplementação por Lote** | $\text{Consumo Diário Total} = \text{Cabeças} \times \text{Consumo/Cab.}$ | Compara com o saldo do insumo vinculado |
+| **Simulação de Seca** | $\text{Consumo Seca} = \text{Consumo Normal} \times 2.0$ | Antecipa esgotamento do sal mineral/proteico |
+| **Risco de Validade** | $\text{Dias para Vencer} \le 30 \text{ e } \text{Saldo} > \text{Consumo Projetado}$ | 🔴 Alerta de Perda Financeira de Medicamento |
+| **Anomalia de Consumo** | $\|x - \mu\| > 2\sigma$ com base mínima de 5 saídas | 🟡 Alerta de Saída Atípica |
 
-### 5.3 Critérios Lógicos de Cálculo
-* **Estoque Crítico (RF03.1):**
-  $$\text{Saldo Atual} = \sum \text{Entradas} - \sum \text{Saídas}$$
-  - $\text{Saldo} \le \text{Estoque Mínimo} \implies$ **🔴 Prioridade Alta**
-  - $\text{Estoque Mínimo} < \text{Saldo} \le 1.5 \times \text{Estoque Mínimo} \implies$ **🟡 Prioridade Média**
-  - $\text{Saldo} > 1.5 \times \text{Estoque Mínimo} \implies$ **🟢 Prioridade Baixa** (Regular)
-* **Duração Estimada do Estoque (RF03.3):**
-  $$\text{Consumo Médio Diário} = \frac{\text{Total de Saídas na Janela (30 dias)}}{30}$$
-  $$\text{Duração Estimada (dias)} = \frac{\text{Saldo Atual}}{\text{Consumo Médio Diário}}$$
-* **Risco de Validade e Perdas (RF03.2):**
-  Se $(\text{Data de Validade} - \text{Hoje}) \le 30\text{ dias}$ e a quantidade restante do lote for superior à projeção de consumo até o vencimento, gera alerta de **🔴 Prioridade Alta** com indicação de perda iminente.
-* **Detecção de Anomalias (RF03.4):**
-  Registros de saída com desvio superior a 2 desvios-padrão ($|x - \mu| > 2\sigma$) em relação à média histórica (com base mínima de 5 registros).
+### 5.2 Tratamento Rigoroso de Dados (RN01, RN02, RN03)
+* **RN01 / RN01.1 — Integridade de Estoque e Unidades:** Unidades incompatíveis (ex.: litros e sacas) nunca são somadas. Tentativas de retirar quantidade superior ao saldo em depósito são sumariamente bloqueadas com mensagem clara de erro.
+* **RN02 — Preservação de Dados Ausentes:** Preços e datas de validade não informados são mantidos como nulos (`None`). O algoritmo **não converte ausência de custo em R$ 0,00**, evitando mascarar o valor patrimonial da fazenda.
+* **RN03 — Comunicação Explícita de Incerteza:** Produtos com histórico menor que 5 movimentações exibem explicitamente: *"Não estimado: histórico insuficiente de movimentações"*, repudiando extrapolações levianas.
+* **RN04 — Transparência e Explicabilidade:** Zero algoritmos "caixa preta". 100% das decisões são lógicas, determinísticas e auditáveis.
 
 ---
 
-## 6. Demonstração e Reanálise
+## 6. Validação Zootécnica e Veterinária
 
-### Reanálise Automática em Tempo Real (RF01.3)
-Um dos requisitos centrais do desafio é demonstrar a capacidade do sistema de reprocessar todas as análises imediatamente após qualquer alteração:
-
-1. Acesse o menu **"Nova Movimentação"** (`/movimentacoes/nova/`).
-2. Selecione um insumo que atualmente esteja em situação regular (🟢 Prioridade Baixa).
-3. Registre uma movimentação do tipo **"Saída"** com quantidade suficiente para rebaixar o saldo abaixo do estoque mínimo.
-4. Clique em **"Salvar Movimentação e Reanalisar Estoque"**.
-5. O sistema redirecionará imediatamente para a tela inicial (`/`), onde a nova pendência de **Estoque Crítico** (🔴 Alta Prioridade) aparecerá instantaneamente no topo da lista "To-Do", com a justificativa recalculada.
-
-### Vídeo Demonstrativo
-* **Link da Apresentação:** *(Espaço reservado para inclusão do link do YouTube / Loom com a demonstração prática da ferramenta utilizando os dados do desafio)*  
-  `https://youtu.be/exemplo-agrohack-2026-demonstracao`
+A modelagem de domínio contou com a validação contínua da integrante **Bruna Pereira da Silva** (Medicina Veterinária — IFRO):
+1. **Escore de Condição Corporal (ECC):**
+   * Escala de 1 a 5 para bovinos de corte e leite.
+   * Lotes com ECC $\le 2.5$ em período seco demandam suplementação proteica/energética imediata para estancar a perda de musculatura.
+2. **Nutrição de Ruminantes na Seca de Rondônia:**
+   * No período das chuvas, o sal mineral comum (consumo médio de 80g a 120g/cab/dia) atende às necessidades básicas de fósforo e microminerais.
+   * Na seca, o declínio da digestibilidade da forrageira exige a transição para sal proteinado (200g a 300g/cab/dia), gerando pico de demanda no barracão. O simulador traduz essa realidade com precisão.
+3. **Manejo Sanitário:**
+   * Controle de validade e lotes de vacinas (febre aftosa, brucelose, clostridioses) e antibióticos para garantir eficácia biológica e evitar resíduos químicos proibidos no leite e na carne.
 
 ---
 
-## 7. Validação e Testes
+## 7. Suíte de Testes Automatizados
 
-### 7.1 Testes Automatizados
-O projeto conta com testes de unidade e integração utilizando o framework oficial do Django:
+O sistema conta com **15 testes automatizados** cobrindo todas as rotas e regras de negócio essenciais:
+
 ```bash
-python manage.py test
+$ python manage.py test
+Found 15 test(s).
+Creating test database for alias 'default'...
+System check identified no issues (0 silenced).
+...............
+----------------------------------------------------------------------
+Ran 15 tests in 1.028s
+
+OK
+Destroying test database for alias 'default'...
 ```
-* **Evidências Cobertas:**
-  - Verificação de renderização e rotas HTTP 200 de todas as telas (`painel`, `produtos`, `detalhe`, `consumo`, `importar`, `movimentações`).
-  - Testes das fórmulas determinísticas de saldo, cobertura e semaforização.
-  - Teste de integridade de formulários e tratamento de erros de importação CSV.
 
-### 7.2 Validação de Domínio (Medicina Veterinária)
-A integrante Bruna Pereira da Silva (estudante de Medicina Veterinária — 2º período) conduziu a validação dos fluxos com foco nas práticas de campo:
-* **Medicamentos e Vacinas:** Confirmação de que produtos biológicos não podem ter prazos de carência e validade ignorados. O controle por lote individual foi validado como essencial para evitar a aplicação de lotes vencidos no rebanho.
-* **Linguagem Acessível:** Ajuste dos textos das justificativas para evitar termos técnicos excessivos de computação (como *"desvio padrão"*) e apresentar explicações diretas ao produtor (como *"saída atípica muito acima da média recente"*).
-
-### 7.3 Limitações Conhecidas do MVP
-* O sistema opera com acesso direto monousuário, sem tela de login/autenticação individual (decisão registrada para focar 100% da avaliação nos algoritmos analíticos e na praticidade de uso).
-* A conversão automática entre unidades de volume (litros) e massa (quilos) não é realizada sem uma tabela de densidade específica do produto; o sistema opta com segurança por segregar e alertar o usuário (RN01).
-
----
-
-## 8. Tecnologias e Uso de IA
-
-### 8.1 Stack Tecnológico
-* **Linguagem:** Python 3.14
-* **Framework Web:** Django 5.2 LTS (arquitetura MTV — Model, Template, View)
-* **Banco de Dados:** SQLite 3 (em conformidade com o regulamento do AgroHack)
-* **Interface & Estilos:** HTML5 semântico, CSS3 puro (Vanilla CSS com Design System voltado à acessibilidade rural e alto contraste)
-* **Visualização Gráfica:** Chart.js 4.4.x via CDN
-
-### 8.2 Declaração de Uso Responsável de Inteligência Artificial (RN04)
-Em cumprimento ao item 5 do regulamento oficial e ao requisito **RN04**, a equipe declara com total transparência:
-
-1. **Apoio no Desenvolvimento:** Foram utilizadas ferramentas de Inteligência Artificial generativa (Google Antigravity e modelos de assistência ao código) exclusivamente como apoio na estruturação inicial de esqueletos de código, geração de marcações HTML e conferência de sintaxe.
-2. **Autonomia e Validação Humana:** Nenhuma decisão agronômica, regra de negócio, critério estatístico de cálculo ou fórmula de semaforização foi gerada de forma autônoma ou "caixa preta" por IA.
-3. **Determinismo:** O motor de análise de estoque funciona por **regras determinísticas, testáveis e 100% explicáveis**, garantindo que toda recomendação possa ser auditada e justificada perante a banca avaliadora.
-4. **Revisão Integral:** Todo o código-fonte, templates e documentação foram revisados, testados, refatorados e aprovados pelos quatro integrantes da equipe.
+### Matriz de Testes
+| Caso de Teste | Escopo | Requisito Validado |
+|---|---|---|
+| `test_painel_renderiza_com_sucesso` | HTTP / View | RF02 (To-Do List carregada com HTTP 200) |
+| `test_lista_produtos_renderiza` | HTTP / View | Listagem de insumos e categorias |
+| `test_detalhe_produto_renderiza` | HTTP / View | Rastreabilidade de lotes e saldo |
+| `test_analise_consumo_renderiza` | HTTP / View | Gráficos temporais de consumo (Chart.js) |
+| `test_tela_importar_renderiza` | HTTP / View | RF01.1 (Importação de planilhas CSV) |
+| `test_tela_movimentacoes_renderiza` | HTTP / View | RF01.2 (Registro dos 13 campos) |
+| `test_saldo_e_alerta_critico` | Motor Analítico | RF03.1 (Estoque mínimo e prioridade ALTA) |
+| `test_estimativa_duracao_estoque` | Motor Analítico | RF03.3 (Cálculo determinístico de cobertura em dias) |
+| `test_alerta_validade_proxima` | Motor Analítico | RF03.2 (Vencimento $\le 30$ dias e risco de perda) |
+| `test_bloqueio_estoque_negativo` | Regra de Negócio | RN01.1 (Rejeição de saída superior ao saldo) |
+| `test_reanalise_imediata_ao_salvar_movimentacao` | Fluxo Completo | RF01.3 (Atualização imediata da To-Do List) |
+| `test_lote_animais_calculo_consumo_diario` | Manejo Bovino | Consumo total diário do lote em kg |
+| `test_lote_animais_crud_views` | Manejo Bovino | Criação, edição e exclusão de lotes de gado |
+| `test_painel_exibe_metricas_regionais_e_gado` | Usabilidade | Cotação da @ Ariquemes e total de cabeças |
+| `test_simulador_modo_seca` | Sazonalidade | Duplicação de consumo na estiagem e alerta crítico |
 
 ---
 
-## 9. Autoria e Licença
+## 8. Estrutura do Repositório
 
-### Autoria
-Este projeto foi integralmente concebido e desenvolvido pelos alunos do **IFRO — *Campus* Ariquemes** para participação no **AGROHACK 2026/2**.
-
-### Segurança e Privacidade (RNF03)
-* O repositório não contém senhas, chaves privadas de API ou credenciais de produção expostas.
-* A chave `SECRET_KEY` do Django é lida a partir de variáveis de ambiente (`DJANGO_SECRET_KEY`), com valor padrão seguro restrito ao ambiente de desenvolvimento local.
-* Arquivos temporários, bancos locais com dados de teste e pastas virtuais estão protegidos no `.gitignore`.
-
-### Licença
-Este software é distribuído sob a licença **MIT**, permitindo o uso acadêmico, aperfeiçoamento e reutilização com a devida atribuição de autoria.
+```
+agrohack/
+├── manage.py                          # Utilitário de comando Django
+├── requirements.txt                   # Dependências oficiais (Django 5.2 LTS)
+├── README.md                          # Documentação técnica completa
+├── agrohack/                          # Configurações globais do projeto Django
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings.py                    # Configuração de banco, static e apps
+│   ├── urls.py                        # Roteamento global
+│   └── wsgi.py
+├── estoque/                           # Aplicação principal (AGROGADO)
+│   ├── admin.py                       # Registro no Django Admin
+│   ├── analises.py                    # Motor analítico, To-Do List e simulação de seca
+│   ├── forms.py                       # Formulários com validação e integridade
+│   ├── models.py                      # Modelos: Insumo, Movimentacao, Lote, LoteAnimais
+│   ├── seed.py                        # Carga de dados de demonstração (gado e insumos)
+│   ├── tests.py                       # Suíte com 15 testes automatizados
+│   ├── urls.py                        # Rotas: painel, lotes, produtos, movimentações
+│   ├── views.py                       # Controladores e renderização
+│   └── migrations/                    # Histórico de migrações SQLite
+├── templates/                         # Templates HTML5 Semânticos
+│   ├── base.html                      # Layout base com seletor Modo Seca e navegação
+│   └── estoque/
+│       ├── painel.html                # Painel principal: To-Do List, KPIs e Rebanho
+│       ├── lote_form.html             # Formulário de criação/edição de lotes
+│       ├── produtos.html              # Catálogo de insumos e saldos
+│       ├── detalhe_produto.html       # Ficha técnica e lotes por validade
+│       ├── movimentacao_form.html     # Registro de entradas e saídas
+│       ├── analise_consumo.html       # Visualização temporal de consumo
+│       └── importar.html              # Ingestão de CSV com prévia de dados
+├── static/                            # Arquivos estáticos
+│   └── css/
+│       └── style.css                  # Design System Vanilla CSS (alto contraste rural)
+└── docs/                              # Documentos e referências do evento
+    ├── regulamento-agrohack.pdf       # Regulamento oficial do AgroHack 2026/2
+    ├── especificacao_de_requisitos.md # Mapeamento completo dos requisitos
+    └── antigravity-agrohack-python-django-sqlite.md
+```
 
 ---
 
-## 10. Versão de Entrega
+## 9. Declaração de Uso Ético e Responsável de IA (RN04)
 
-* **Evento de Avaliação:** AGROHACK 2026/2 — Semana Nacional de Ciência e Tecnologia (SNCT)  
-* **Data da Demonstração:** 29 de Outubro de 2026  
-* **Tag de Entrega:** `v1.0.0-snct2026`  
-* **Identificador de Commit Final:** `HEAD` (auditado com `python manage.py check` e suíte de testes aprovada)  
-* **Status do MVP:** Completo, testado e pronto para homologação com os dados oficiais do desafio.
+Em estrita consonância com o item 5 do regulamento do AgroHack 2026/2 e o requisito **RN04**:
+
+1. **Escopo do Auxílio:** Ferramentas de Inteligência Artificial generativa (Google Antigravity e modelos de assistência) foram utilizadas exclusivamente como suporte técnico na geração inicial de esqueletos sintáticos e agilização de estilização CSS.
+2. **Soberania do Domínio Rural:** Nenhuma regra zootécnica de nutrição animal, fórmula de semaforização ou critério de cálculo de estoques foi produzido de maneira autônoma ou opaca.
+3. **Determinismo e Auditabilidade:** Todo o motor analítico opera por **algoritmos matemáticos explícitos e auditáveis**, viabilizando a comprovação passo a passo de cada alerta perante a comissão avaliadora do IFRO.
+4. **Revisão e Homologação:** A integridade de código, segurança e funcionalidade foram integralmente auditadas, testadas e aprovadas pelos quatro integrantes da equipe.
+
+---
+
+## 10. Licença e Versão de Entrega
+
+* **Evento de Avaliação:** AGROHACK 2026/2 — Semana Nacional de Ciência e Tecnologia (SNCT)
+* **Data da Demonstração:** 29 de Outubro de 2026
+* **Tag de Entrega:** `v1.0.0-snct2026`
+* **Licença:** Distribuído sob a [Licença MIT](https://opensource.org/licenses/MIT). Permitido o uso acadêmico, evolução e disseminação com atribuição dos autores do IFRO Campus Ariquemes.

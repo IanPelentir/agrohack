@@ -7,7 +7,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 import math
 from django.db.models import Sum, Avg
-from .models import Produto, Lote, Movimentacao
+from .models import Produto, Lote, Movimentacao, LoteAnimais
 
 
 def estimar_duracao(produto, janela_dias=30):
@@ -66,15 +66,31 @@ def calcular_estoque_critico(produto):
     """
     RF03.1: Identifica produtos com risco de falta / estoque crítico.
     Regra da equipe (D3):
-      - Saldo <= estoque_minimo: ALTA (Vermelho)
-      - Saldo <= 1.5 * estoque_minimo: MEDIA (Amarelo)
+      - Saldo <= 0: ALTA (Vermelho) - Ruptura imediata
+      - Saldo <= estoque_minimo: ALTA (Vermelho) - Estoque Crítico
+      - Saldo <= 1.5 * estoque_minimo: MEDIA (Amarelo) - Atenção
       - Saldo > 1.5 * estoque_minimo: BAIXA / NORMAL (Verde)
     """
-    if produto.estoque_minimo is None:
-        return None
-
     saldo = produto.saldo_atual
     minimo = produto.estoque_minimo
+
+    # Ruptura emergencial (saldo zerado ou negativo)
+    if saldo <= 0:
+        return {
+            'tipo': 'ESTOQUE_CRITICO',
+            'tipo_display': 'Estoque Crítico (Esgotado)',
+            'prioridade': 'ALTA',
+            'produto_id': produto.id,
+            'produto_nome': produto.nome,
+            'unidade': produto.unidade,
+            'saldo': saldo,
+            'estoque_minimo': minimo,
+            'justificativa': f"Estoque crítico / Esgotado: Saldo atual ({saldo} {produto.unidade}) está zerado ou negativo. Reposição imediata recomendada.",
+            'valor_total': Decimal('0.00'),
+        }
+
+    if minimo is None:
+        return None
 
     if saldo <= minimo:
         estimativa = estimar_duracao(produto)
@@ -106,6 +122,7 @@ def calcular_estoque_critico(produto):
         }
 
     return None
+
 
 
 def analisar_validade(produto, dias_alerta=30):
@@ -291,9 +308,112 @@ def acompanhamento_temporal(produto):
     }
 
 
-def gerar_alertas_priorizados():
+def analisar_suplementacao_lotes(modo_seca=False):
     """
-    RF02.1 / RF02.2 / RF02.3: Consolida e prioriza todos os alertas do estoque em estilo To-Do List.
+    Analisa o consumo de suplementos e insumos vinculados aos lotes de animais (LoteAnimais).
+    - 🔴 Crítico (< 7 dias de consumo estimado pelo lote ou falta de insumo)
+    - 🟡 Atenção (7 a 15 dias de consumo ou alerta sazonal de transição)
+    - 🟢 Normal (> 15 dias de consumo em dia)
+    """
+    alertas = []
+    fator_seca = Decimal('2.0') if modo_seca else Decimal('1.0')
+
+    lotes = LoteAnimais.objects.filter(ativo=True)
+    for lote in lotes:
+        if not lote.insumo_suplementar:
+            continue
+
+        insumo = lote.insumo_suplementar
+        duracao_dias = lote.duracao_estimada_insumo(fator_seca=fator_seca)
+
+        consumo_g = int(lote.consumo_diario_cabeca * 1000 * fator_seca)
+
+        if duracao_dias is None:
+            continue
+
+        if duracao_dias <= 7:
+            justificativa = (
+                f"O {insumo.nome} dura apenas {duracao_dias} dia(s) para o {lote.nome} "
+                f"({lote.quantidade_cabecas} cab.) consumindo {consumo_g}g/cabeça/dia"
+                f"{' [Simulação de Início da Seca Ativada: consumo acelerado]' if modo_seca else ''}."
+            )
+            alertas.append({
+                'tipo': 'SUPLEMENTACAO_CRITICA',
+                'tipo_display': 'Suplementação Crítica (< 7 dias)',
+                'prioridade': 'ALTA',
+                'produto_id': insumo.id,
+                'produto_nome': insumo.nome,
+                'unidade': insumo.unidade,
+                'saldo': insumo.saldo_atual,
+                'estoque_minimo': insumo.estoque_minimo,
+                'duracao_estimada': f"{duracao_dias} dia(s)",
+                'justificativa': justificativa,
+                'valor_total': insumo.valor_total_estoque,
+                'lote_animal_id': lote.id,
+                'lote_animal_nome': lote.nome,
+            })
+        elif duracao_dias <= 15:
+            justificativa = (
+                f"Atenção para reposição: Estoque de {insumo.nome} atende apenas {duracao_dias} dia(s) para o {lote.nome} "
+                f"({lote.quantidade_cabecas} cab.) consumindo {consumo_g}g/cabeça/dia."
+            )
+            alertas.append({
+                'tipo': 'SUPLEMENTACAO_ATENCAO',
+                'tipo_display': 'Atenção para Reposição de Suplemento',
+                'prioridade': 'MEDIA',
+                'produto_id': insumo.id,
+                'produto_nome': insumo.nome,
+                'unidade': insumo.unidade,
+                'saldo': insumo.saldo_atual,
+                'estoque_minimo': insumo.estoque_minimo,
+                'duracao_estimada': f"{duracao_dias} dia(s)",
+                'justificativa': justificativa,
+                'valor_total': insumo.valor_total_estoque,
+                'lote_animal_id': lote.id,
+                'lote_animal_nome': lote.nome,
+            })
+        else:
+            justificativa = (
+                f"Operação em dia: Suplementação de {insumo.nome} com cobertura de {duracao_dias} dia(s) "
+                f"para o {lote.nome} ({lote.quantidade_cabecas} cab.) consumindo {consumo_g}g/cabeça/dia."
+            )
+            alertas.append({
+                'tipo': 'SUPLEMENTACAO_NORMAL',
+                'tipo_display': 'Suplementação em Dia',
+                'prioridade': 'BAIXA',
+                'produto_id': insumo.id,
+                'produto_nome': insumo.nome,
+                'unidade': insumo.unidade,
+                'saldo': insumo.saldo_atual,
+                'estoque_minimo': insumo.estoque_minimo,
+                'duracao_estimada': f"{duracao_dias} dia(s)",
+                'justificativa': justificativa,
+                'valor_total': insumo.valor_total_estoque,
+                'lote_animal_id': lote.id,
+                'lote_animal_nome': lote.nome,
+            })
+
+    if modo_seca:
+        alertas.append({
+            'tipo': 'TRANSICAO_SECA',
+            'tipo_display': 'Alerta Sazonal: Transição para Época de Seca',
+            'prioridade': 'MEDIA',
+            'produto_id': None,
+            'produto_nome': 'Manejo Nutricional na Seca',
+            'unidade': '-',
+            'saldo': None,
+            'estoque_minimo': None,
+            'duracao_estimada': 'Estiagem Ativa',
+            'justificativa': 'Início da seca simulado: Pastagens sob estresse hídrico com queda drástica de proteína bruta. Suplementação proteico-energética deve ser reforçada para sustentar o ganho de peso e o ECC do rebanho.',
+            'valor_total': None,
+        })
+
+    return alertas
+
+
+def gerar_alertas_priorizados(modo_seca=False):
+    """
+    RF02.1 / RF02.2 / RF02.3: Consolida e prioriza todos os alertas do estoque e dos lotes de gado em estilo To-Do List.
     Ordena: ALTA (Vermelho) -> MEDIA (Amarelo) -> BAIXA (Verde).
     """
     alertas = []
@@ -318,6 +438,10 @@ def gerar_alertas_priorizados():
         alerta_financeiro = analisar_financeiro(p)
         if alerta_financeiro:
             alertas.append(alerta_financeiro)
+
+    # 5. Suplementação e Manejo por Lotes de Gado (LoteAnimais)
+    alertas_lotes = analisar_suplementacao_lotes(modo_seca=modo_seca)
+    alertas.extend(alertas_lotes)
 
     # Ordenar por prioridade
     peso_prioridade = {'ALTA': 1, 'MEDIA': 2, 'BAIXA': 3}
