@@ -1,244 +1,268 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}{{ produto.nome }} | Detalhes do Insumo{% endblock %}
+{% block title %}{{ produto.nome }} | Ficha Técnica do Insumo | AGROGADO{% endblock %}
 
 {% block content %}
-<div class="product-detail-container">
-  <div class="section-header">
-    <div>
-      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
-        <span class="category-tag">{{ produto.categoria|default:"Insumo Rural" }}</span>
+<div class="product-detail-page">
+
+  <!-- Topo da Ficha com Breadcrumbs e Ações -->
+  <div class="page-top-bar">
+    <div class="page-title-group">
+      <nav class="breadcrumb-nav" aria-label="Navegação estrutural">
+        <a href="{% url 'estoque:painel' %}">Painel</a>
+        <span class="breadcrumb-sep">/</span>
+        <a href="{% url 'estoque:produto_lista' %}">Insumos</a>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-current">{{ produto.nome }}</span>
+      </nav>
+
+      <div class="detail-header-badges">
+        <span class="category-badge-pill">{{ produto.categoria|default:"Insumo Rural" }}</span>
         {% if produto.status_estoque == 'CRITICO' %}
-          <span class="semaphore-badge alta"><span class="dot"></span> Estoque Crítico</span>
+          <span class="semaphore-badge alta"><span class="dot" aria-hidden="true"></span> Estoque Crítico</span>
         {% elif produto.status_estoque == 'ATENCAO' %}
-          <span class="semaphore-badge media"><span class="dot"></span> Atenção</span>
+          <span class="semaphore-badge media"><span class="dot" aria-hidden="true"></span> Atenção</span>
         {% else %}
-          <span class="semaphore-badge baixa"><span class="dot"></span> Estoque Normal</span>
+          <span class="semaphore-badge baixa"><span class="dot" aria-hidden="true"></span> Estoque Seguro</span>
         {% endif %}
       </div>
-      <h2 class="section-title">{{ produto.nome }}</h2>
+
+      <h2 class="page-heading">{{ produto.nome }}</h2>
     </div>
 
-    <div class="filter-bar">
-      <a href="{% url 'estoque:consumo_produto' produto.id %}" class="btn btn-secondary btn-sm" id="btn-ver-grafico">
-        <span>📈</span> Ver Gráfico de Consumo
+    <div class="page-actions-group">
+      <a href="{% url 'estoque:consumo_produto' produto.id %}" class="btn btn-outline-agro" id="btn-ver-grafico">
+        <span>📈</span> Gráfico de Consumo
       </a>
-      <a href="{% url 'estoque:movimentacao_nova' %}?produto_id={{ produto.id }}" class="btn btn-primary btn-sm" id="btn-nova-mov">
+      <a href="{% url 'estoque:movimentacao_nova' %}?produto_id={{ produto.id }}" class="btn btn-primary-agro" id="btn-nova-mov">
         <span>➕</span> Nova Movimentação
       </a>
-      <a href="{% url 'estoque:produto_lista' %}" class="btn btn-secondary btn-sm">
+      <a href="{% url 'estoque:produto_lista' %}" class="btn btn-outline-agro">
         Voltar à Lista
       </a>
     </div>
   </div>
 
   <!-- Cards de Indicadores do Produto -->
-  <div class="kpi-grid" style="margin-bottom: 2rem;">
-    <div class="kpi-card {% if produto.status_estoque == 'CRITICO' %}urgent{% else %}normal{% endif %}">
+  <div class="kpi-grid agrogado-kpis" style="margin-bottom: 2rem;">
+    
+    <!-- 1. Saldo Calculado -->
+    <div class="kpi-card agrotech-card {% if produto.status_estoque == 'CRITICO' %}urgent{% else %}normal{% endif %}">
       <div class="kpi-info">
-        <h3>Saldo Calculado</h3>
-        <div class="kpi-value">{{ produto.saldo }} <span style="font-size: 1rem; font-weight: 500;">{{ produto.unidade }}</span></div>
+        <span class="kpi-tag">Saldo Físico Atual</span>
+        <div class="kpi-value-wrapper">
+          <span class="kpi-value">{{ produto.saldo }}</span>
+          <span class="kpi-unit">{{ produto.unidade }}</span>
+        </div>
         <div class="kpi-sub">
           Estoque mínimo: <strong>{{ produto.estoque_minimo|default:"Não definido" }} {{ produto.unidade }}</strong>
         </div>
       </div>
-      <div class="kpi-icon">📦</div>
+      <div class="kpi-icon-circle stock-bg" aria-hidden="true">📦</div>
     </div>
 
-    <div class="kpi-card info">
+    <!-- 2. Cobertura Estimada -->
+    <div class="kpi-card agrotech-card quote">
       <div class="kpi-info">
-        <h3>Cobertura Estimada</h3>
-        <div class="kpi-value">
+        <span class="kpi-tag">Cobertura de Estoque</span>
+        <div class="kpi-value-wrapper">
           {% if produto.cobertura_dias %}
-            ~{{ produto.cobertura_dias }} <span style="font-size: 1rem;">dias</span>
+            <span class="kpi-value">~{{ produto.cobertura_dias }}</span>
+            <span class="kpi-unit">dias</span>
           {% else %}
-            <span style="font-size: 1.15rem; color: var(--color-text-muted);">Não estimada</span>
+            <span class="kpi-value" style="font-size: 1.25rem; color: var(--color-text-muted);">Não estimada</span>
           {% endif %}
         </div>
         <div class="kpi-sub">
           {% if produto.consumo_medio_diario %}
-            Consumo médio: {{ produto.consumo_medio_diario|floatformat:2 }} {{ produto.unidade }}/dia
+            Consumo médio: ~{{ produto.consumo_medio_diario|floatformat:2 }} {{ produto.unidade }}/dia
           {% else %}
-            Histórico recente insuficiente
+            Histórico recente insuficiente (RN03)
           {% endif %}
         </div>
       </div>
-      <div class="kpi-icon">⏱️</div>
+      <div class="kpi-icon-circle quote-bg" aria-hidden="true">⏱️</div>
     </div>
 
-    <div class="kpi-card warning">
+    <!-- 3. Próximo Vencimento -->
+    <div class="kpi-card agrotech-card alert-summary">
       <div class="kpi-info">
-        <h3>Próximo Vencimento</h3>
-        <div class="kpi-value">
+        <span class="kpi-tag">Próximo Vencimento</span>
+        <div class="kpi-value-wrapper">
           {% if produto.proxima_validade %}
-            {{ produto.proxima_validade|date:"d/m/Y" }}
+            <span class="kpi-value" style="font-size: 1.35rem;">{{ produto.proxima_validade|date:"d/m/Y" }}</span>
           {% else %}
-            <span style="font-size: 1.15rem; color: var(--color-text-muted);">Não informada</span>
+            <span class="kpi-value" style="font-size: 1.25rem; color: var(--color-text-muted);">Não perecível</span>
           {% endif %}
         </div>
         <div class="kpi-sub">
           {% if produto.dias_para_vencer is not None %}
             {% if produto.dias_para_vencer < 0 %}
-              <span style="color: var(--color-urgent-text); font-weight: 700;">Vencido há {{ produto.dias_para_vencer|stringformat:"d"|slice:"1:" }} dias</span>
+              <span class="alert-urgent-text">⚠️ Vencido há {{ produto.dias_para_vencer|stringformat:"d"|slice:"1:" }} dias</span>
+            {% elif produto.dias_para_vencer <= 30 %}
+              <span style="color: #b45309; font-weight: 700;">Restam {{ produto.dias_para_vencer }} dia(s)</span>
             {% else %}
-              Restam {{ produto.dias_para_vencer }} dia(s)
+              <span class="alert-normal-text">Restam {{ produto.dias_para_vencer }} dia(s)</span>
             {% endif %}
           {% else %}
-            Sem lote perecível cadastrado
+            Sem lote com data de validade
           {% endif %}
         </div>
       </div>
-      <div class="kpi-icon">⏳</div>
+      <div class="kpi-icon-circle alert-bg" aria-hidden="true">⏳</div>
     </div>
 
-    <div class="kpi-card normal">
+    <!-- 4. Valor Total em Estoque -->
+    <div class="kpi-card agrotech-card bovine">
       <div class="kpi-info">
-        <h3>Valor em Estoque</h3>
-        <div class="kpi-value">
+        <span class="kpi-tag">Capital Imobilizado</span>
+        <div class="kpi-value-wrapper">
           {% if produto.valor_total %}
-            R$ {{ produto.valor_total|floatformat:2 }}
+            <span class="kpi-value">R$ {{ produto.valor_total|floatformat:2 }}</span>
           {% else %}
-            <span style="font-size: 1.15rem; color: var(--color-text-muted);">-</span>
+            <span class="kpi-value" style="font-size: 1.25rem; color: var(--color-text-muted);">-</span>
           {% endif %}
         </div>
         <div class="kpi-sub">
-          Preço ref: {% if produto.preco_unitario %}R$ {{ produto.preco_unitario|floatformat:2 }}/{{ produto.unidade }}{% else %}Não informado{% endif %}
+          {% if produto.preco_unitario %}
+            Preço referência: R$ {{ produto.preco_unitario|floatformat:2 }} / {{ produto.unidade }}
+          {% else %}
+            Sem preço informado (não convertido em zero)
+          {% endif %}
         </div>
       </div>
-      <div class="kpi-icon">💰</div>
+      <div class="kpi-icon-circle bovine-bg" aria-hidden="true">💰</div>
     </div>
+
   </div>
 
-  <!-- Alertas Ativos deste Produto -->
-  {% if alertas_produto %}
-    <div style="margin-bottom: 2rem;">
-      <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.75rem;">Alertas Vinculados a este Insumo</h3>
-      <div class="alert-list">
-        {% for a in alertas_produto %}
-          <div class="alert-card {{ a.prioridade|lower }}">
-            <div class="alert-body">
-              <div class="alert-headline">
-                <span class="semaphore-badge {{ a.prioridade|lower }}">
-                  <span class="dot"></span> Prioridade {{ a.prioridade }}
-                </span>
-                <span class="category-tag">{{ a.tipo_display|default:a.tipo }}</span>
-              </div>
-              <p class="alert-justification">{{ a.justificativa }}</p>
-            </div>
-          </div>
-        {% endfor %}
+  <!-- Lotes Cadastrados do Insumo -->
+  <section class="section-container">
+    <div class="section-header-row">
+      <div>
+        <div class="section-badge">Rastreabilidade Rural</div>
+        <h3 class="section-title">
+          <span>🏷️</span> Lotes de Fabricação & Validades Registradas
+        </h3>
+        <p class="section-desc">Identificação dos lotes fornecidos, datas de validade e controle de risco sanitário.</p>
       </div>
     </div>
-  {% endif %}
 
-  <!-- Tabela de Lotes Registrados -->
-  {% if lotes %}
-    <div class="chart-card">
-      <div class="chart-header">
-        <h3 style="font-size: 1.1rem; font-weight: 700;">Lotes e Validades (RF03.2)</h3>
-        <span class="badge-tag">{{ lotes|length }} lote(s) cadastrado(s)</span>
-      </div>
-
-      <div class="table-container" style="margin-bottom: 0;">
-        <table class="data-table">
+    {% if lotes %}
+      <div class="table-responsive-wrapper card-table-shadow">
+        <table class="agrogado-table">
           <thead>
             <tr>
-              <th>Lote</th>
+              <th>Identificação do Lote</th>
               <th>Data de Validade</th>
-              <th>Qtd Registrada</th>
-              <th>Status do Lote</th>
+              <th>Situação de Prazo</th>
+              <th>Data de Cadastro</th>
             </tr>
           </thead>
           <tbody>
             {% for lote in lotes %}
               <tr>
-                <td><strong>{{ lote.numero|default:"Lote não identificado" }}</strong></td>
+                <td><strong>{{ lote.numero_lote }}</strong></td>
                 <td>
                   {% if lote.data_validade %}
-                    {{ lote.data_validade|date:"d/m/Y" }}
+                    📅 {{ lote.data_validade|date:"d/m/Y" }}
                   {% else %}
-                    <span style="color: var(--color-text-light);">Não informada</span>
+                    <span class="text-muted-empty">Sem validade informada</span>
                   {% endif %}
                 </td>
-                <td>{{ lote.quantidade }} {{ produto.unidade }}</td>
                 <td>
-                  {% if lote.vencido %}
-                    <span class="semaphore-badge alta"><span class="dot"></span> Vencido</span>
-                  {% elif lote.proximo_vencimento %}
-                    <span class="semaphore-badge media"><span class="dot"></span> Vence em breve</span>
+                  {% if lote.dias_para_vencer is not None %}
+                    {% if lote.dias_para_vencer < 0 %}
+                      <span class="badge-val-vencido">Vencido há {{ lote.dias_para_vencer|stringformat:"d"|slice:"1:" }} dias</span>
+                    {% elif lote.dias_para_vencer <= 30 %}
+                      <span class="badge-val-alerta">Atenção: vence em {{ lote.dias_para_vencer }} dias</span>
+                    {% else %}
+                      <span class="badge-val-ok">Vence em {{ lote.dias_para_vencer }} dias</span>
+                    {% endif %}
                   {% else %}
-                    <span class="semaphore-badge baixa"><span class="dot"></span> Regular</span>
+                    <span class="text-muted-empty">—</span>
                   {% endif %}
                 </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  {% endif %}
-
-  <!-- Histórico de Movimentações -->
-  <div class="chart-card">
-    <div class="chart-header">
-      <h3 style="font-size: 1.1rem; font-weight: 700;">Histórico de Movimentações</h3>
-      <span class="category-tag">Entradas e Saídas</span>
-    </div>
-
-    {% if movimentacoes %}
-      <div class="table-container" style="margin-bottom: 0;">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Tipo</th>
-              <th>Quantidade</th>
-              <th>Lote</th>
-              <th>Destino / Finalidade</th>
-              <th>Responsável</th>
-              <th>Preço Unit.</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for m in movimentacoes %}
-              <tr>
-                <td>{{ m.data|date:"d/m/Y" }}</td>
-                <td>
-                  {% if m.tipo == 'ENTRADA' %}
-                    <span class="semaphore-badge baixa" style="font-size: 0.72rem;">⬇️ Entrada</span>
-                  {% else %}
-                    <span class="semaphore-badge media" style="font-size: 0.72rem;">⬆️ Saída</span>
-                  {% endif %}
-                </td>
-                <td><strong>{{ m.quantidade }}</strong> {{ produto.unidade }}</td>
-                <td>{{ m.lote|default:"-" }}</td>
-                <td>{{ m.destino|default:"Uso geral" }}</td>
-                <td>{{ m.responsavel|default:"-" }}</td>
-                <td>{% if m.preco_unitario %}R$ {{ m.preco_unitario|floatformat:2 }}{% else %}-{% endif %}</td>
+                <td>{{ lote.criado_em|date:"d/m/Y H:i" }}</td>
               </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
     {% else %}
-      <div class="empty-state" style="padding: 2rem 1rem;">
-        <p>Nenhuma movimentação registrada para este insumo.</p>
-        <a href="{% url 'estoque:movimentacao_nova' %}?produto_id={{ produto.id }}" class="btn btn-primary btn-sm">
-          Registrar Primeira Movimentação
-        </a>
+      <div class="empty-state-card" style="padding: 1.5rem;">
+        <p class="text-muted">Nenhum lote com rastreabilidade específica registrado para este insumo.</p>
       </div>
     {% endif %}
-  </div>
+  </section>
 
-  <!-- Transparência Metodológica (RN01, RN02, RN03) -->
-  <div class="disclaimer-box">
-    <span aria-hidden="true">💡</span>
-    <div>
-      <strong>Critério de Cálculo:</strong>
-      A estimativa de duração considera o consumo diário médio de saídas no período recente.
-      Caso haja menos de 5 movimentações ou ausência de saídas registradas, o sistema informa expressamente a incerteza estatística (RN03).
+  <!-- Histórico Recente de Movimentações -->
+  <section class="section-container" style="margin-top: 2rem;">
+    <div class="section-header-row">
+      <div>
+        <div class="section-badge">Livro de Movimentações • RF01</div>
+        <h3 class="section-title">
+          <span>🔄</span> Histórico Recente de Entradas e Saídas
+        </h3>
+        <p class="section-desc">Registro auditável de todas as movimentações ocorridas neste insumo.</p>
+      </div>
+      <div>
+        <a href="{% url 'estoque:movimentacao_nova' %}?produto_id={{ produto.id }}" class="btn btn-sm btn-primary-agro">
+          <span>➕</span> Nova Movimentação
+        </a>
+      </div>
     </div>
-  </div>
+
+    {% if movimentacoes %}
+      <div class="table-responsive-wrapper card-table-shadow">
+        <table class="agrogado-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Tipo</th>
+              <th>Quantidade</th>
+              <th>Lote</th>
+              <th>Fornecedor / Origem</th>
+              <th>Destino / Aplicação</th>
+              <th>Responsável</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in movimentacoes %}
+              <tr>
+                <td><strong>{{ m.data_movimentacao|date:"d/m/Y" }}</strong></td>
+                <td>
+                  {% if m.tipo == 'ENTRADA' %}
+                    <span class="badge-cat-grupo badge-grupo-sanidade" style="background: #dcfce7; color: #166534;">
+                      ⬇️ Entrada
+                    </span>
+                  {% else %}
+                    <span class="badge-cat-grupo badge-grupo-nutricao" style="background: #fee2e2; color: #991b1b;">
+                      ⬆️ Saída
+                    </span>
+                  {% endif %}
+                </td>
+                <td>
+                  <strong>{{ m.quantidade }}</strong> {{ produto.unidade }}
+                </td>
+                <td>
+                  {% if m.lote %}{{ m.lote.numero_lote }}{% else %}<span class="text-muted-empty">—</span>{% endif %}
+                </td>
+                <td>{{ m.fornecedor|default:"—" }}</td>
+                <td>{{ m.destino|default:"—" }}</td>
+                <td>{{ m.responsavel|default:"—" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state-card" style="padding: 1.5rem;">
+        <p class="text-muted">Nenhuma movimentação registrada no histórico deste produto.</p>
+      </div>
+    {% endif %}
+  </section>
 
 </div>
 {% endblock %}

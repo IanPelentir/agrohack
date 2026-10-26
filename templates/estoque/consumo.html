@@ -1,118 +1,156 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Acompanhamento Temporal de Consumo (RF03.6){% endblock %}
+{% block title %}Evolução Temporal de Consumo | AGROGADO{% endblock %}
 
 {% block content %}
-<div class="consumption-container">
-  <div class="section-header">
-    <div>
-      <h2 class="section-title">
-        <span aria-hidden="true">📈</span> Evolução Temporal do Consumo de Insumos
+<div class="consumption-page">
+
+  <!-- Cabeçalho com Breadcrumb -->
+  <div class="page-top-bar">
+    <div class="page-title-group">
+      <nav class="breadcrumb-nav" aria-label="Navegação estrutural">
+        <a href="{% url 'estoque:painel' %}">Painel</a>
+        <span class="breadcrumb-sep">/</span>
+        <a href="{% url 'estoque:produto_lista' %}">Insumos</a>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-current">Acompanhamento Temporal</span>
+      </nav>
+      <h2 class="page-heading">
+        <span class="heading-icon" aria-hidden="true">📈</span> Evolução Temporal do Consumo de Insumos
       </h2>
-      <p class="section-desc">
-        Análise visual de sazonalidade, ritmo de aplicação e tendências de saída ao longo do tempo (RF03.6).
+      <p class="page-subheading">
+        Análise visual de sazonalidade, ritmo de aplicação no campo e histórico de retiradas ao longo dos meses (RF03.6).
       </p>
     </div>
-    <div>
-      <a href="{% url 'estoque:painel' %}" class="btn btn-secondary btn-sm">
+
+    <div class="page-actions-group">
+      <a href="{% url 'estoque:painel' %}" class="btn btn-outline-agro">
         Voltar ao Painel
+      </a>
+      <a href="{% url 'estoque:produto_lista' %}" class="btn btn-outline-agro">
+        Lista de Insumos
       </a>
     </div>
   </div>
 
-  <!-- Barra de Seleção de Insumo e Período -->
-  <div class="chart-card" style="padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
-    <form method="get" class="filter-bar" style="width: 100%; justify-content: space-between;">
-      <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-        <label for="produto_select" style="font-weight: 600; font-size: 0.9rem;">Selecione o Insumo:</label>
-        <select name="produto_id" id="produto_select" class="form-control" style="max-width: 320px;" onchange="this.form.submit()">
-          {% for p in lista_produtos %}
-            <option value="{{ p.id }}" {% if p.id == produto_selecionado.id %}selected{% endif %}>
-              {{ p.nome }} ({{ p.unidade }})
-            </option>
-          {% empty %}
-            <option value="">Nenhum produto cadastrado</option>
-          {% endfor %}
-        </select>
-
-        <noscript>
-          <button type="submit" class="btn btn-secondary btn-sm">Visualizar</button>
-        </noscript>
+  <!-- Barra de Seleção Amigável do Insumo -->
+  <div class="product-picker-card">
+    <form method="get" class="picker-form" id="form-select-produto">
+      <div class="picker-group">
+        <label for="produto_select" class="picker-label">
+          <span aria-hidden="true">🎯</span> Escolha o Insumo para Analisar:
+        </label>
+        <div class="select-picker-wrap">
+          <select name="produto_id" id="produto_select" class="form-control-picker" onchange="this.form.submit()">
+            {% for p in lista_produtos %}
+              <option value="{{ p.id }}" {% if p.id == produto_selecionado.id %}selected{% endif %}>
+                {{ p.nome }} ({{ p.unidade }})
+              </option>
+            {% empty %}
+              <option value="">Nenhum produto cadastrado no momento</option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
 
       {% if produto_selecionado %}
-        <div style="font-size: 0.85rem; color: var(--color-text-muted);">
-          Saldo Atual: <strong>{{ produto_selecionado.saldo }} {{ produto_selecionado.unidade }}</strong>
+        <div class="selected-product-badge">
+          <span class="badge-label">Saldo em Estoque:</span>
+          <span class="badge-stock-val">{{ produto_selecionado.saldo }} {{ produto_selecionado.unidade }}</span>
         </div>
       {% endif %}
     </form>
   </div>
 
   {% if produto_selecionado %}
-    <!-- Card do Gráfico Chart.js -->
-    <div class="chart-card">
-      <div class="chart-header">
+    <!-- Painel de Métricas do Insumo Selecionado -->
+    <div class="mini-kpi-strip" style="margin-bottom: 1.5rem;">
+      <div class="mini-kpi-item">
+        <span class="mini-kpi-lbl">Insumo em Foco</span>
+        <strong class="mini-kpi-val">{{ produto_selecionado.nome }}</strong>
+      </div>
+      <div class="mini-kpi-item">
+        <span class="mini-kpi-lbl">Unidade Oficial</span>
+        <strong class="mini-kpi-val">{{ produto_selecionado.unidade }}</strong>
+      </div>
+      <div class="mini-kpi-item">
+        <span class="mini-kpi-lbl">Períodos Registrados</span>
+        <strong class="mini-kpi-val">{{ dados_temporais|length|default:0 }} mês(es)</strong>
+      </div>
+      <div class="mini-kpi-item">
+        <span class="mini-kpi-lbl">Estoque Mínimo</span>
+        <strong class="mini-kpi-val">{{ produto_selecionado.estoque_minimo|default:"Não inf." }} {{ produto_selecionado.unidade }}</strong>
+      </div>
+    </div>
+
+    <!-- Card Principal do Gráfico -->
+    <div class="chart-card-modern">
+      <div class="chart-top-bar">
         <div>
-          <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--color-text-main);">
-            Saídas Mensais: {{ produto_selecionado.nome }}
+          <h3 class="chart-title">
+            Curva de Saídas Mensais: {{ produto_selecionado.nome }}
           </h3>
-          <p style="font-size: 0.85rem; color: var(--color-text-muted);">
-            Valores expressos na unidade de medida oficial: <strong>{{ produto_selecionado.unidade }}</strong>
+          <p class="chart-subtitle">
+            Histórico consolidado de aplicações no campo expressas em <strong>{{ produto_selecionado.unidade }}</strong>.
           </p>
         </div>
-        <span class="badge-tag">Visualização Interativa Chart.js</span>
+        <span class="badge-tag tag-chart">Gráfico Interativo Chart.js</span>
       </div>
 
-      <div class="chart-wrapper">
+      <div class="chart-canvas-container">
         <canvas id="consumptionChart"></canvas>
       </div>
 
-      <!-- Alerta de Metodologia e Incerteza (RN02 / RN03 / Guia Item 136) -->
-      <div class="disclaimer-box" style="margin-top: 1.5rem;">
-        <span aria-hidden="true">⚠️</span>
-        <div>
-          <strong>Princípio de Rigor Analítico:</strong>
-          Meses ou períodos sem saídas registradas são tratados como <em>ausência de observação</em> e <strong>não como prova de consumo zero futuro</strong>. A sazonalidade agrícola (época de preparo de solo, plantio ou colheita) deve ser levada em consideração na interpretação.
+      <!-- Alerta Metodológico Transparente (RN02 / RN03) -->
+      <div class="disclaimer-note-card">
+        <span class="disclaimer-icon" aria-hidden="true">💡</span>
+        <div class="disclaimer-text">
+          <strong>Rigor Analítico e Sazonalidade:</strong>
+          Meses sem saídas são tratados como ausência de observação real e <strong>não como consumo zero presumido</strong>. No bioma amazônico de Rondônia, a alternância entre período de chuvas e estiagem dita o ritmo de manejo de pastagens e aplicação de defensivos e suplementação.
         </div>
       </div>
     </div>
 
-    <!-- Tabela Resumo dos Períodos Analisados -->
-    <div class="chart-card">
-      <div class="chart-header">
-        <h3 style="font-size: 1.1rem; font-weight: 700;">Detalhamento das Saídas por Período</h3>
-        <span class="category-tag">{{ dados_temporais|length|default:0 }} período(s) registrado(s)</span>
+    <!-- Detalhamento em Tabela por Período -->
+    <div class="chart-card-modern" style="margin-top: 1.75rem;">
+      <div class="chart-top-bar">
+        <div>
+          <h3 class="chart-title">Detalhamento das Saídas por Período</h3>
+          <p class="chart-subtitle">Resumo das movimentações agrupadas mês a mês.</p>
+        </div>
+        <span class="category-badge-pill">{{ dados_temporais|length|default:0 }} período(s) registrado(s)</span>
       </div>
 
       {% if dados_temporais %}
-        <div class="table-container" style="margin-bottom: 0;">
-          <table class="data-table">
+        <div class="table-responsive-wrapper">
+          <table class="agrogado-table">
             <thead>
               <tr>
                 <th>Período (Mês/Ano)</th>
                 <th>Total de Retiradas</th>
                 <th>Número de Registros</th>
                 <th>Média por Retirada</th>
-                <th>Comportamento</th>
+                <th>Comportamento Zootécnico/Agronômico</th>
               </tr>
             </thead>
             <tbody>
               {% for d in dados_temporais %}
                 <tr>
-                  <td><strong>{{ d.rotulo }}</strong></td>
-                  <td><strong>{{ d.total_saidas }}</strong> {{ produto_selecionado.unidade }}</td>
-                  <td>{{ d.num_movimentacoes }} saída(s)</td>
-                  <td>{{ d.media_por_saida|floatformat:1 }} {{ produto_selecionado.unidade }}</td>
                   <td>
-                    {% if d.is_anomalia %}
-                      <span class="semaphore-badge media" title="Volume acima de 2 desvios-padrão da média histórica">
-                        <span class="dot"></span> Pico Atípico
-                      </span>
-                    {% else %}
-                      <span class="semaphore-badge baixa">
-                        <span class="dot"></span> Típico
-                      </span>
-                    {% endif %}
+                    <strong>📅 {{ d.periodo }}</strong>
+                  </td>
+                  <td>
+                    <strong class="text-accent">{{ d.total }}</strong> {{ produto_selecionado.unidade }}
+                  </td>
+                  <td>
+                    <span class="badge-tag">{{ d.contagem }} saída(s)</span>
+                  </td>
+                  <td>
+                    {{ d.media|floatformat:2 }} {{ produto_selecionado.unidade }}
+                  </td>
+                  <td>
+                    <span class="tag-behavior">Consumo verificado em campo</span>
                   </td>
                 </tr>
               {% endfor %}
@@ -120,57 +158,57 @@
           </table>
         </div>
       {% else %}
-        <p style="color: var(--color-text-muted); font-size: 0.9rem; padding: 1rem 0;">
-          Ainda não há saídas registradas para este insumo. Registre movimentações ou importe o histórico para gerar as curvas temporais.
-        </p>
+        <div class="empty-state-card" style="padding: 2rem;">
+          <div class="empty-icon" aria-hidden="true">📊</div>
+          <h4>Nenhuma saída registrada para este insumo</h4>
+          <p>Não há histórico de retiradas ou aplicações no campo para gerar a evolução temporal.</p>
+          <a href="{% url 'estoque:movimentacao_nova' %}?produto_id={{ produto_selecionado.id }}" class="btn btn-primary-agro btn-sm">
+            <span>➕</span> Registrar Primeira Saída
+          </a>
+        </div>
       {% endif %}
     </div>
 
   {% else %}
-    <div class="empty-state">
-      <div class="empty-state-icon">📈</div>
-      <h3>Nenhum Insumo Selecionado</h3>
-      <p>Cadastre insumos ou importe a planilha oficial para acompanhar a curva de consumo ao longo do tempo.</p>
-      <a href="{% url 'estoque:importar' %}" class="btn btn-primary">
-        Importar Base de Insumos
+    <div class="empty-state-card">
+      <div class="empty-icon" aria-hidden="true">📦</div>
+      <h4>Selecione um insumo para visualizar o gráfico</h4>
+      <p>Nenhum produto foi selecionado ou não há insumos cadastrados na fazenda.</p>
+      <a href="{% url 'estoque:produto_lista' %}" class="btn btn-primary-agro">
+        Ir para Lista de Insumos
       </a>
     </div>
   {% endif %}
 
 </div>
-{% endblock %}
 
-{% block extra_js %}
-{% if produto_selecionado %}
+{% if produto_selecionado and labels_json %}
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     const ctx = document.getElementById('consumptionChart');
     if (!ctx) return;
 
-    // Dados fornecidos pela View do Django
-    const labels = {{ chart_labels|safe|default:"[]" }};
-    const dataValues = {{ chart_data|safe|default:"[]" }};
-    const unidade = "{{ produto_selecionado.unidade|default:'un' }}";
-
-    // Se labels estiverem vazias para demonstração, preenche com placeholders educativos
-    const finalLabels = labels.length > 0 ? labels : ['Jan/26', 'Fev/26', 'Mar/26', 'Abr/26', 'Mai/26', 'Jun/26'];
-    const finalData = dataValues.length > 0 ? dataValues : [0, 0, 0, 0, 0, 0];
+    const labels = {{ labels_json|safe }};
+    const valores = {{ valores_json|safe }};
 
     new Chart(ctx, {
-      type: 'bar',
+      type: 'line',
       data: {
-        labels: finalLabels,
-        datasets: [
-          {
-            label: 'Consumo / Saídas (' + unidade + ')',
-            data: finalData,
-            backgroundColor: 'rgba(45, 106, 79, 0.75)',
-            borderColor: '#1b4332',
-            borderWidth: 1.5,
-            borderRadius: 6,
-            hoverBackgroundColor: 'rgba(27, 67, 50, 0.9)'
-          }
-        ]
+        labels: labels,
+        datasets: [{
+          label: 'Saídas ({{ produto_selecionado.unidade }})',
+          data: valores,
+          borderColor: '#1b4332',
+          backgroundColor: 'rgba(45, 106, 79, 0.12)',
+          borderWidth: 3,
+          tension: 0.35,
+          fill: true,
+          pointBackgroundColor: '#2d6a4f',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 6,
+          pointHoverRadius: 8
+        }]
       },
       options: {
         responsive: true,
@@ -180,18 +218,19 @@
             display: true,
             position: 'top',
             labels: {
-              font: {
-                family: 'Inter',
-                size: 13,
-                weight: '600'
-              },
+              font: { family: 'Inter', size: 13, weight: 600 },
               color: '#1f2937'
             }
           },
           tooltip: {
+            backgroundColor: '#12372a',
+            titleFont: { family: 'Inter', size: 13, weight: 700 },
+            bodyFont: { family: 'Inter', size: 13 },
+            padding: 10,
+            cornerRadius: 8,
             callbacks: {
-              label: function(context) {
-                return ' ' + context.parsed.y + ' ' + unidade + ' retirados';
+              label: function (context) {
+                return ' ' + context.parsed.y + ' {{ produto_selecionado.unidade }} consumidos';
               }
             }
           }
@@ -199,23 +238,17 @@
         scales: {
           y: {
             beginAtZero: true,
-            title: {
-              display: true,
-              text: 'Quantidade (' + unidade + ')',
-              font: { family: 'Inter', weight: '600' }
-            },
-            grid: {
-              color: '#e5e7eb'
+            grid: { color: '#e2e8f0' },
+            ticks: {
+              color: '#64748b',
+              font: { family: 'Inter', size: 12 }
             }
           },
           x: {
-            title: {
-              display: true,
-              text: 'Mês de Apuração',
-              font: { family: 'Inter', weight: '600' }
-            },
-            grid: {
-              display: false
+            grid: { display: false },
+            ticks: {
+              color: '#64748b',
+              font: { family: 'Inter', size: 12 }
             }
           }
         }
@@ -224,4 +257,5 @@
   });
 </script>
 {% endif %}
+
 {% endblock %}

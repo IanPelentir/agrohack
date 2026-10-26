@@ -4,13 +4,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Gestão Inteligente de Insumos{% endblock %} | AgroHack 2026/2</title>
-  <meta name="description" content="Sistema inteligente de apoio à decisão para gestão de insumos rurais, análise de estoque crítico, validade e acompanhamento temporal.">
+  <title>{% block title %}AGROGADO | Gestão Inteligente de Insumos & Rebanho{% endblock %}</title>
+  <meta name="description" content="Sistema inteligente de apoio à decisão para gestão de insumos rurais, análise de estoque crítico, validade e acompanhamento temporal. AgroHack 2026/2 IFRO Ariquemes.">
+  <meta name="theme-color" content="#12372A">
   
-  <!-- Tipografia Inter do Google Fonts -->
+  <!-- Tipografia Inter do Google Fonts com pesos calibrados -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   
   <!-- Folha de Estilos Principal -->
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
@@ -20,52 +21,85 @@
 
   {% block extra_head %}{% endblock %}
 </head>
-<body>
+<body class="agrotech-body">
 
-  <!-- Barra Superior de Navegação -->
+  <!-- Barra Superior de Navegação Agrotech Moderna -->
   <header class="app-header" role="banner">
     <div class="header-container">
-      <a href="{% url 'estoque:painel' %}" class="brand-wrapper" title="AGROGADO - Gestão Inteligente de Insumos e Manejo Bovino">
-        <div class="brand-icon" aria-hidden="true">🐂🌱</div>
+      
+      <!-- Marca & Identidade Visual -->
+      <a href="{% url 'estoque:painel' %}" class="brand-wrapper" title="AGROGADO - Início do Painel">
+        <div class="brand-badge-icon" aria-hidden="true">
+          <span class="brand-emoji">🐂</span>
+          <span class="brand-leaf">🌱</span>
+        </div>
         <div class="brand-text">
-          <h1>AGROGADO</h1>
-          <span>Gestão Inteligente de Insumos & Manejo Bovino</span>
+          <div class="brand-headline">
+            <span class="brand-name">AGROGADO</span>
+            <span class="brand-tag-edition">IFRO 2026/2</span>
+          </div>
+          <span class="brand-subtitle">Gestão Inteligente</span>
         </div>
       </a>
 
-      <div class="header-right-actions">
-        <!-- Botão de Simulação Sazonal em Destaque no Header -->
+      <!-- Botão Hambúrguer Mobile -->
+      <button type="button" class="mobile-menu-toggle" id="btn-mobile-menu" aria-label="Abrir Menu de Navegação" onclick="toggleMenuMobile()">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+
+      <!-- Ações da Direita & Navegação Principal -->
+      <div class="header-right-actions" id="header-nav-collapse">
+        
+        <!-- Botão de Simulação Sazonal em Destaque -->
         <a href="{% url 'estoque:painel' %}?seca={% if modo_seca %}0{% else %}1{% endif %}" 
            class="btn-season-sim {% if modo_seca %}active-seca{% endif %}" 
            id="btn-toggle-seca"
-           title="Clique para alternar a simulação do período de estiagem em Rondônia">
-          <span class="season-icon">{% if modo_seca %}☀️ Estiagem Ativa{% else %}🌧️ Época das Águas{% endif %}</span>
-          <span class="season-label">{% if modo_seca %}Modo Seca (Consumo 2x){% else %}Simular Início da Seca{% endif %}</span>
+           title="Clique para alternar o cálculo entre época chuvosa e estiagem amazônica">
+          <span class="season-icon" aria-hidden="true">{% if modo_seca %}☀️{% else %}🌧️{% endif %}</span>
+          <div class="season-text-group">
+            <span class="season-title">{% if modo_seca %}Estiagem Ativa (Seca){% else %}Época das Águas{% endif %}</span>
+            <span class="season-subtitle">{% if modo_seca %}Consumo mineral 2.0×{% else %}Consumo padrão 1.0×{% endif %}</span>
+          </div>
         </a>
 
+        <!-- Links de Navegação -->
         <nav class="main-nav" role="navigation" aria-label="Navegação Principal">
           <a href="{% url 'estoque:painel' %}" class="nav-link {% if request.resolver_match.url_name == 'painel' %}active{% endif %}" id="nav-painel">
-            <span aria-hidden="true">📋</span> Painel Geral
+            <span class="nav-icon" aria-hidden="true">📋</span>
+            <span class="nav-text">Painel</span>
             {% if total_alertas_urgentes %}
               <span class="nav-badge" title="{{ total_alertas_urgentes }} alertas urgentes">{{ total_alertas_urgentes }}</span>
             {% endif %}
           </a>
+          
           <a href="{% url 'estoque:painel' %}#secao-lotes" class="nav-link" id="nav-lotes">
-            <span aria-hidden="true">🐂</span> Lotes de Gado
+            <span class="nav-icon" aria-hidden="true">🐂</span>
+            <span class="nav-text">Lotes de Gado</span>
           </a>
+
           <a href="{% url 'estoque:produto_lista' %}" class="nav-link {% if request.resolver_match.url_name == 'produto_lista' or request.resolver_match.url_name == 'produto_detalhe' %}active{% endif %}" id="nav-produtos">
-            <span aria-hidden="true">📦</span> Insumos
+            <span class="nav-icon" aria-hidden="true">📦</span>
+            <span class="nav-text">Insumos</span>
           </a>
-          <a href="{% url 'estoque:consumo' %}" class="nav-link {% if request.resolver_match.url_name == 'consumo' %}active{% endif %}" id="nav-consumo">
-            <span aria-hidden="true">📈</span> Consumo
+
+          <a href="{% url 'estoque:consumo' %}" class="nav-link {% if request.resolver_match.url_name == 'consumo' or request.resolver_match.url_name == 'consumo_produto' %}active{% endif %}" id="nav-consumo">
+            <span class="nav-icon" aria-hidden="true">📈</span>
+            <span class="nav-text">Consumo</span>
           </a>
+
           <a href="{% url 'estoque:importar' %}" class="nav-link {% if request.resolver_match.url_name == 'importar' %}active{% endif %}" id="nav-importar">
-            <span aria-hidden="true">📥</span> Importar
+            <span class="nav-icon" aria-hidden="true">📥</span>
+            <span class="nav-text">Importar</span>
           </a>
-          <a href="{% url 'estoque:movimentacao_nova' %}" class="btn btn-sm btn-accent" id="nav-nova-movimentacao">
-            <span aria-hidden="true">➕</span> Movimentação
+
+          <a href="{% url 'estoque:movimentacao_nova' %}" class="btn-quick-movement" id="nav-nova-movimentacao">
+            <span class="quick-icon" aria-hidden="true">➕</span>
+            <span>Nova Movimentação</span>
           </a>
         </nav>
+
       </div>
     </div>
   </header>
@@ -77,26 +111,33 @@
     {% if messages %}
       <div class="messages-container" role="region" aria-label="Notificações do Sistema">
         {% for message in messages %}
-          <div class="alert-message {{ message.tags }}" role="alert">
-            <span>{{ message }}</span>
+          <div class="alert-message alert-{{ message.tags|default:'info' }}" role="alert">
+            <div class="alert-icon-wrap" aria-hidden="true">
+              {% if message.tags == 'success' %}✅{% elif message.tags == 'error' %}⚠️{% elif message.tags == 'warning' %}🟡{% else %}ℹ️{% endif %}
+            </div>
+            <div class="alert-content-text">
+              {{ message }}
+            </div>
+            <button type="button" class="alert-close-btn" onclick="this.parentElement.remove()" aria-label="Fechar notificação">×</button>
           </div>
         {% endfor %}
       </div>
     {% endif %}
 
-    <!-- Banner de Contexto de Transparência e Qualidade de Dados (RN03 / RN04) -->
-    <div class="context-banner" role="complementary" aria-label="Status de Validação de Dados">
+    <!-- Barra de Contexto Amigável (Transparência Analítica RN03 / RN04) -->
+    <aside class="context-banner" role="complementary" aria-label="Rigor Analítico do Sistema">
       <div class="context-banner-text">
-        <strong>Apoio à Decisão Rural:</strong> Alertas baseados em regras estatísticas determinísticas transparentes. Dados ausentes não são tratados como zero.
+        <span class="banner-pulse-dot" aria-hidden="true"></span>
+        <span><strong>Dados da propriedade:</strong> alertas calculados por regras claras a partir do rebanho e do estoque cadastrados.</span>
       </div>
       <div class="context-banner-badges">
-        <span class="badge-tag" title="Regulamento Oficial AgroHack 2026/2">AgroHack IFRO 2026/2</span>
-        <span class="badge-tag" title="Motor analítico determinístico e auditável">Análise Auditável</span>
+        <span class="badge-tag tag-agro" title="AgroHack IFRO Campus Ariquemes">AgroHack IFRO 2026/2</span>
+        <span class="badge-tag tag-audit" title="Regras transparentes sem dados fictícios">Análise Auditável</span>
       </div>
-    </div>
+    </aside>
 
     {% block content %}
-    <!-- Conteúdo específico de cada tela -->
+    <!-- Conteúdo específico das telas filhas -->
     {% endblock %}
 
   </main>
@@ -104,19 +145,40 @@
   <!-- Rodapé Institucional e Acessível -->
   <footer class="app-footer" role="contentinfo">
     <div class="footer-container">
-      <div>
-        <p><strong>AgroHack 2026/2</strong> — Desafio Oficial: <em>Gestão inteligente de insumos em uma propriedade rural</em></p>
-        <p>IFRO Campus Ariquemes • Apresentação: 29/10/2026</p>
+      <div class="footer-branding">
+        <div class="footer-logo">
+          <strong>AGROGADO</strong> • Pecuária de Precisão & Gestão de Insumos
+        </div>
+        <p class="footer-credits">
+          Desafio Oficial AgroHack 2026/2 • IFRO Campus Ariquemes • Vale do Jamari, Rondônia
+        </p>
       </div>
-      <div class="footer-links">
+
+      <nav class="footer-links" aria-label="Links rápidos do rodapé">
         <a href="{% url 'estoque:painel' %}">Início</a>
-        <span>•</span>
-        <a href="{% url 'estoque:importar' %}">Carga de Registros</a>
-        <span>•</span>
-        <a href="{% url 'estoque:consumo' %}">Histórico</a>
-      </div>
+        <span class="sep">•</span>
+        <a href="{% url 'estoque:produto_lista' %}">Insumos</a>
+        <span class="sep">•</span>
+        <a href="{% url 'estoque:consumo' %}">Evolução Temporal</a>
+        <span class="sep">•</span>
+        <a href="{% url 'estoque:importar' %}">Carga CSV</a>
+        <span class="sep">•</span>
+        <a href="{% url 'estoque:carregar_demonstracao' %}" title="Carregar base de testes oficial">Dados de Teste</a>
+      </nav>
     </div>
   </footer>
+
+  <!-- Script Auxiliar Global -->
+  <script>
+    function toggleMenuMobile() {
+      const nav = document.getElementById('header-nav-collapse');
+      const btn = document.getElementById('btn-mobile-menu');
+      if (nav && btn) {
+        nav.classList.toggle('mobile-open');
+        btn.classList.toggle('active');
+      }
+    }
+  </script>
 
   {% block extra_js %}{% endblock %}
 </body>

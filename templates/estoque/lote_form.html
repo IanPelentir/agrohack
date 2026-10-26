@@ -1,101 +1,152 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ titulo }} | AGROGADO{% endblock %}
 
 {% block content %}
-<div class="movement-form-container">
-  <div class="section-header">
-    <div>
-      <h2 class="section-title">
-        <span>🐂</span> {{ titulo }}
+<div class="form-page-container">
+
+  <!-- Topo da Página com Breadcrumb -->
+  <div class="page-top-bar">
+    <div class="page-title-group">
+      <nav class="breadcrumb-nav" aria-label="Navegação estrutural">
+        <a href="{% url 'estoque:painel' %}">Painel</a>
+        <span class="breadcrumb-sep">/</span>
+        <a href="{% url 'estoque:painel' %}#secao-lotes">Lotes de Gado</a>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-current">{{ titulo }}</span>
+      </nav>
+      <h2 class="page-heading">
+        <span class="heading-icon" aria-hidden="true">🐂</span> {{ titulo }}
       </h2>
-      <p class="section-desc">
-        Informe os dados do lote, pasto, Escore Corporal (ECC) e insumo suplementar para sincronização com o estoque.
+      <p class="page-subheading">
+        Cadastre ou atualize as características zootécnicas do lote, pasto de pastejo, escore corporal (ECC) e vínculo de suplementação mineral.
       </p>
     </div>
-    <div>
-      <a href="{% url 'estoque:painel' %}#secao-lotes" class="btn btn-secondary btn-sm">
-        Voltar ao Painel
+
+    <div class="page-actions-group">
+      <a href="{% url 'estoque:painel' %}#secao-lotes" class="btn btn-outline-agro">
+        Voltar aos Lotes
       </a>
     </div>
   </div>
 
-  <div class="form-card">
+  <div class="form-card-modern">
     <form method="post" id="form-lote">
       {% csrf_token %}
 
-      <div class="form-grid-2">
-        <div class="form-group">
-          <label for="id_nome">Identificação do Lote *</label>
+      <!-- Seção 1: Identificação e Rebanho -->
+      <div class="form-section-header">
+        <span class="section-num-badge">1</span>
+        <div>
+          <h4>Identificação e Classificação do Rebanho</h4>
+          <p class="form-section-sub">Nome do lote, categoria produtiva e quantidade de cabeças.</p>
+        </div>
+      </div>
+
+      <div class="form-grid-modern">
+        
+        <div class="form-group-item">
+          <label for="id_nome" class="form-label-custom">
+            Identificação / Nome do Lote <span class="required-star">*</span>
+          </label>
           {{ form.nome }}
-          <div class="form-help">Ex: Lote 05 - Garrotes Nelore, Lote 06 - Matrizes Leiteiras</div>
+          <div class="form-help-text">Ex: Lote 01 - Garrotes Nelore, Lote 03 - Vacas em Lactação</div>
         </div>
 
-        <div class="form-group">
-          <label for="id_categoria">Categoria Zootécnica *</label>
+        <div class="form-group-item">
+          <label for="id_categoria" class="form-label-custom">
+            Categoria Zootécnica <span class="required-star">*</span>
+          </label>
           {{ form.categoria }}
-          <div class="form-help">Finalidade produtiva do lote na propriedade.</div>
+          <div class="form-help-text">Finalidade produtiva do lote na fazenda.</div>
         </div>
-      </div>
 
-      <div class="form-grid-2">
-        <div class="form-group">
-          <label for="id_quantidade_cabecas">Quantidade de Cabeças *</label>
+        <div class="form-group-item">
+          <label for="id_quantidade_cabecas" class="form-label-custom">
+            Quantidade de Cabeças <span class="required-star">*</span>
+          </label>
           {{ form.quantidade_cabecas }}
-          <div class="form-help">Número de animais presentes no lote.</div>
+          <div class="form-help-text">Número de animais que compõem este lote.</div>
         </div>
 
-        <div class="form-group">
-          <label for="id_pasto_localizacao">Pasto / Piquete / Localização *</label>
+        <div class="form-group-item">
+          <label for="id_pasto_localizacao" class="form-label-custom">
+            Pasto / Piquete / Localização <span class="required-star">*</span>
+          </label>
           {{ form.pasto_localizacao }}
-          <div class="form-help">Pasto atual de pastejo ou piquete rotacionado.</div>
+          <div class="form-help-text">Local onde o gado se encontra atualmente pastejando.</div>
+        </div>
+
+      </div>
+
+      <!-- Seção 2: Condição Corporal e Nutrição -->
+      <div class="form-section-header" style="margin-top: 2rem;">
+        <span class="section-num-badge">2</span>
+        <div>
+          <h4>Condição Corporal e Suplementação Mineral</h4>
+          <p class="form-section-sub">Parâmetros zootécnicos para cálculo automático de autonomia de estoque.</p>
         </div>
       </div>
 
-      <div class="form-grid-2">
-        <div class="form-group">
-          <label for="id_escore_corporal">Escore de Condição Corporal (ECC 1.0 a 5.0) *</label>
+      <div class="form-grid-modern">
+        
+        <div class="form-group-item">
+          <label for="id_escore_corporal" class="form-label-custom">
+            Escore Corporal (ECC 1.0 a 5.0) <span class="required-star">*</span>
+          </label>
           {{ form.escore_corporal }}
-          <div class="form-help">1 = Muito Magro | 3 = Ideal | 5 = Sobrepeso.</div>
+          <div class="form-help-text">
+            Guia: <strong>1.0–2.5</strong> (Abaixo do peso) | <strong>3.0–4.0</strong> (Ideal) | <strong>4.5–5.0</strong> (Sobrepeso)
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="id_peso_medio_estimado">Peso Médio Estimado (kg)</label>
+        <div class="form-group-item">
+          <label for="id_peso_medio_estimado" class="form-label-custom">
+            Peso Médio Estimado por Cabeça (kg)
+          </label>
           {{ form.peso_medio_estimado }}
-          <div class="form-help">Peso vivo médio por cabeça para cálculo de arrobas.</div>
+          <div class="form-help-text">Utilizado para calcular as arrobas totais e valor de rebanho.</div>
         </div>
-      </div>
 
-      <div class="form-grid-2">
-        <div class="form-group">
-          <label for="id_consumo_diario_cabeca">Consumo Diário por Cabeça (kg/dia) *</label>
+        <div class="form-group-item">
+          <label for="id_consumo_diario_cabeca" class="form-label-custom">
+            Consumo Diário por Cabeça (kg/dia) <span class="required-star">*</span>
+          </label>
           {{ form.consumo_diario_cabeca }}
-          <div class="form-help">Ex: 0.120 kg/dia para Sal Mineral simples, 0.250 kg/dia na seca.</div>
+          <div class="form-help-text">Padrão mineral: <strong>0.120 kg</strong> (120 g/cab/dia). Na seca o sistema dobra se ativado.</div>
         </div>
 
-        <div class="form-group">
-          <label for="id_insumo_suplementar">Insumo Suplementar Vinculado</label>
+        <div class="form-group-item">
+          <label for="id_insumo_suplementar" class="form-label-custom">
+            Insumo Suplementar Vinculado
+          </label>
           {{ form.insumo_suplementar }}
-          <div class="form-help">Insumo cuja autonomia de dias será calculada pelo consumo deste lote.</div>
+          <div class="form-help-text">O estoque deste insumo calculará os dias de autonomia para o lote.</div>
         </div>
+
+        <div class="form-group-item full-width-field">
+          <label for="id_observacoes" class="form-label-custom">
+            Observações de Manejo e Sanidade
+          </label>
+          {{ form.observacoes }}
+          <div class="form-help-text">Anotações veterinárias, pesagens, vermifugações ou particularidades deste lote.</div>
+        </div>
+
       </div>
 
-      <div class="form-group">
-        <label for="id_observacoes">Observações de Manejo e Sanidade</label>
-        {{ form.observacoes }}
-        <div class="form-help">Histórico de vacinação, vermifugação ou particularidades.</div>
-      </div>
-
-      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
-        <a href="{% url 'estoque:painel' %}#secao-lotes" class="btn btn-secondary">
+      <!-- Rodapé de Ações -->
+      <div class="form-actions-footer">
+        <a href="{% url 'estoque:painel' %}#secao-lotes" class="btn btn-outline-agro">
           Cancelar
         </a>
-        <button type="submit" class="btn btn-primary" id="btn-salvar-lote">
+        <button type="submit" class="btn btn-primary-agro btn-lg" id="btn-salvar-lote">
           <span>💾</span> Salvar Lote de Animais
         </button>
       </div>
 
     </form>
   </div>
+
 </div>
 {% endblock %}

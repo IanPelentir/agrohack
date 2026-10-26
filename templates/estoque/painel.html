@@ -7,164 +7,174 @@
 <div class="agrogado-dashboard">
 
   <!-- =========================================================================
-       1. CABEÇALHO DO PAINEL & SIMULAÇÃO SAZONAL (ARIQUEMES / RO)
+       1. HERO CARD: IDENTIFICAÇÃO REGIONAL & CONTROLE SAZONAL (ARIQUEMES / RO)
        ========================================================================= -->
-  <div class="dashboard-hero-card">
+  <header class="dashboard-hero-card" role="banner" aria-label="Apresentação do Painel Operacional">
     <div class="hero-main-info">
-      <div class="location-badge">
+      <div class="location-badge" title="Localização geoespacial da propriedade monitorada">
         <span class="location-dot" aria-hidden="true"></span>
-        <span>📍 Ariquemes / RO • Vale do Jamari (SNCT 2026 IFRO)</span>
+        <span>📍 Ariquemes / RO • Vale do Jamari (IFRO AgroHack 2026/2)</span>
       </div>
-      <h2 class="hero-title">Painel Operacional AGROGADO</h2>
+      <h2 class="hero-title">
+        <span class="hero-brand-accent">AGROGADO</span> • Painel da propriedade
+      </h2>
       <p class="hero-subtitle">
-        Integração analítica inteligente: rebanho bovino por lotes, consumo diário de suplementação mineral e To-Do List semafórica para apoio à tomada de decisão no campo.
+        O que precisa de atenção hoje, como está o rebanho e quanto há no estoque.
       </p>
     </div>
 
-    <!-- Bloco de Simulação Sazonal em Destaque -->
-    <div class="seasonal-control-box {% if modo_seca %}active-dry-season{% endif %}">
+    <!-- Bloco de Simulação Sazonal em Destaque (RF02.1 / RF03.4) -->
+    <aside class="seasonal-control-box {% if modo_seca %}active-dry-season{% endif %}" aria-label="Simulação de Estacionalidade Climática">
       <div class="season-status-header">
-        <span class="season-badge-pill {% if modo_seca %}seca{% else %}aguas{% endif %}">
-          {% if modo_seca %}☀️ Época da Seca (Estiagem){% else %}🌧️ Época das Águas (Chuvosa){% endif %}
+        <div class="season-pill-wrapper">
+          <span class="season-badge-pill {% if modo_seca %}seca{% else %}aguas{% endif %}">
+            {% if modo_seca %}☀️ Época da Seca (Estiagem Amazônica){% else %}🌧️ Época das Águas (Período Chuvoso){% endif %}
+          </span>
+          <span class="season-multiplier-tag {% if modo_seca %}tag-alert{% endif %}">
+            {% if modo_seca %}Fator 2.0× Consumo{% else %}Fator 1.0× Padrão{% endif %}
+          </span>
+        </div>
+        <span class="season-sub">
+          Demanda de suplementação: <strong>{% if modo_seca %}Dobrada (~240 g/cab/dia na Seca){% else %}Regular (120 g/cab/dia){% endif %}</strong>
         </span>
-        <span class="season-sub">Consumo de suplemento: <strong>{% if modo_seca %}2x Acelerado (Seca Amazônica){% else %}Padrão (120g/cab/dia){% endif %}</strong></span>
       </div>
       <p class="season-help">
-        Na estiagem em Rondônia, o capim perde teor proteico e o consumo de sal e proteinado dobra para evitar queda no Escore Corporal (ECC).
+        A simulação ajusta o consumo previsto de suplemento dos lotes vinculados.
       </p>
       <div class="season-actions">
         <a href="{% url 'estoque:painel' %}?seca={% if modo_seca %}0{% else %}1{% endif %}" 
-           class="btn btn-sm {% if modo_seca %}btn-warning{% else %}btn-primary{% endif %} pulse-animation"
-           id="btn-simular-seca-card">
+           class="btn btn-sm {% if modo_seca %}btn-warning-solar{% else %}btn-primary-agro{% endif %} pulse-animation"
+           id="btn-simular-seca-card"
+           title="Clique para alternar o cálculo entre período chuvoso e estiagem">
           {% if modo_seca %}
             <span>🌧️ Retornar para Época das Águas</span>
           {% else %}
-            <span>☀️ Simular Início da Seca (Aumento de Consumo)</span>
+            <span>☀️ Simular Início da Seca (Consumo 2×)</span>
           {% endif %}
         </a>
       </div>
-    </div>
-  </div>
+    </aside>
+  </header>
 
   <!-- =========================================================================
-       2. MÉTRICAS PRINCIPAIS E COTAÇÕES REGIONAIS (ARIQUEMES / RO)
+       2. KPI CARDS: MÉTRICAS PECUÁRIAS E COTAÇÕES REGIONAIS (ARIQUEMES / RO)
        ========================================================================= -->
-  <div class="kpi-grid agrogado-kpis" role="region" aria-label="Métricas Principais e Cotações Regionais">
+  <section class="kpi-grid agrogado-kpis" role="region" aria-label="Indicadores Chave de Desempenho e Mercado">
     
     <!-- Card 1: Total de Cabeças de Gado -->
-    <div class="kpi-card agrotech-card bovine">
+    <article class="kpi-card agrotech-card bovine" tabindex="0">
       <div class="kpi-info">
         <span class="kpi-tag">Rebanho Monitorado</span>
         <div class="kpi-value-wrapper">
-          <div class="kpi-value" id="kpi-total-cabecas">{{ kpis.total_cabecas }}</div>
+          <span class="kpi-value" id="kpi-total-cabecas">{{ kpis.total_cabecas }}</span>
           <span class="kpi-unit">cabeças</span>
         </div>
         <div class="kpi-sub">
           <strong>{{ kpis.total_lotes }} lotes ativos</strong> (Corte, Leite, Recria, Cria)
         </div>
-        <div class="kpi-mini-metric">
-          <span>Consumo diário: ~{{ kpis.total_consumo_diario_sal_kg|floatformat:1 }} kg de suplemento</span>
+        <div class="kpi-mini-metric" title="Consumo somado de suplementação mineral de todos os lotes ativos">
+          <span>🌾 Consumo diário: ~<strong>{{ kpis.total_consumo_diario_kg|floatformat:1 }} kg</strong> de suplemento</span>
         </div>
       </div>
       <div class="kpi-icon-circle bovine-bg" aria-hidden="true">🐂</div>
-    </div>
+    </article>
 
     <!-- Card 2: Valor Total Estocado -->
-    <div class="kpi-card agrotech-card stock">
+    <article class="kpi-card agrotech-card stock" tabindex="0">
       <div class="kpi-info">
-        <span class="kpi-tag">Capital em Estoque</span>
+        <span class="kpi-tag">Patrimônio em Estoque</span>
         <div class="kpi-value-wrapper">
-          <div class="kpi-value" id="kpi-valor-estoque">R$ {{ kpis.valor_total_estocado|floatformat:2 }}</div>
+          <span class="kpi-value" id="kpi-valor-estoque">R$ {{ kpis.valor_total_estocado|floatformat:2 }}</span>
         </div>
         <div class="kpi-sub">
-          <strong>{{ kpis.total_produtos }} insumos</strong> cadastrados
+          <strong>{{ kpis.total_produtos }} insumos</strong> catalogados
         </div>
-        <div class="kpi-mini-metric">
-          <span>Sanidade, Nutrição e Manejo da propriedade</span>
+        <div class="kpi-mini-metric" title="Distribuição de saldo por áreas operacionais">
+          <span>📦 Sanidade, Nutrição e Manejo da Fazenda</span>
         </div>
       </div>
       <div class="kpi-icon-circle stock-bg" aria-hidden="true">📦</div>
-    </div>
+    </article>
 
     <!-- Card 3: Cotação da @ do Boi Gordo (Ariquemes / RO) -->
-    <div class="kpi-card agrotech-card quote">
+    <article class="kpi-card agrotech-card quote" tabindex="0">
       <div class="kpi-info">
         <span class="kpi-tag">Cotação Regional (Ariquemes / RO)</span>
         <div class="kpi-value-wrapper">
-          <div class="kpi-value highlight-gold" id="kpi-cotacao-arroba">R$ {{ kpis.cotacao_arroba|floatformat:2 }}</div>
+          <span class="kpi-value highlight-gold" id="kpi-cotacao-arroba">R$ {{ kpis.cotacao_arroba|floatformat:2 }}</span>
           <span class="kpi-unit">/@</span>
         </div>
         <div class="kpi-sub">
-          <span class="quote-trend-up">▲ +0,8% no dia</span> • CEPEA / Rondônia
+          <span class="quote-trend-up">▲ +0,8% na praça</span> • CEPEA / Rondônia
         </div>
-        <div class="kpi-mini-metric">
-          <span>Rebanho est.: ~{{ kpis.arrobas_totais|floatformat:0 }} @ (~R$ {{ kpis.patrimonio_rebanho|floatformat:0 }})</span>
+        <div class="kpi-mini-metric" title="Estimativa com base no rendimento de carcaça e peso vivo estimado">
+          <span>Patrimônio vivo: ~<strong>{{ kpis.arrobas_totais|floatformat:0 }} @</strong> (~R$ {{ kpis.patrimonio_rebanho|floatformat:0 }})</span>
         </div>
       </div>
       <div class="kpi-icon-circle quote-bg" aria-hidden="true">📈</div>
-    </div>
+    </article>
 
-    <!-- Card 4: Semáforo de Urgências Operacionais -->
-    <div class="kpi-card agrotech-card semaphore-summary">
+    <!-- Card 4: Diagnóstico Semafórico Interativo -->
+    <article class="kpi-card agrotech-card semaphore-summary" tabindex="0">
       <div class="kpi-info">
         <span class="kpi-tag">Diagnóstico Semafórico</span>
-        <div class="semaphore-counts">
-          <span class="badge-count count-urgent" title="Alertas Críticos">
+        <div class="semaphore-counts" id="kpi-semaphore-shortcuts" role="toolbar" aria-label="Filtrar To-Do list pelos contadores">
+          <button type="button" class="badge-count count-urgent interactive-kpi-pill" data-kpi-filter="ALTA" title="Filtrar apenas alertas críticos">
             🔴 <strong>{{ kpis.alta_prioridade }}</strong> Crítico
-          </span>
-          <span class="badge-count count-warning" title="Alertas de Atenção">
+          </button>
+          <button type="button" class="badge-count count-warning interactive-kpi-pill" data-kpi-filter="MEDIA" title="Filtrar alertas de atenção">
             🟡 <strong>{{ kpis.media_prioridade }}</strong> Atenção
-          </span>
-          <span class="badge-count count-normal" title="Operação Regular">
+          </button>
+          <button type="button" class="badge-count count-normal interactive-kpi-pill" data-kpi-filter="BAIXA" title="Filtrar monitoramento normal">
             🟢 <strong>{{ kpis.baixa_prioridade }}</strong> Normal
-          </span>
+          </button>
         </div>
         <div class="kpi-sub">
           {% if kpis.alta_prioridade > 0 %}
-            <span class="alert-urgent-text">Requer ação imediata hoje</span>
+            <span class="alert-urgent-text">⚠️ {{ kpis.alta_prioridade }} item(ns) exigem intervenção imediata</span>
           {% else %}
-            <span class="alert-normal-text">Estoque e rebanho controlados</span>
+            <span class="alert-normal-text">✅ Parâmetros zootécnicos e estoque regulares</span>
           {% endif %}
         </div>
       </div>
       <div class="kpi-icon-circle alert-bg" aria-hidden="true">🚨</div>
-    </div>
+    </article>
 
-  </div>
+  </section>
 
   <!-- =========================================================================
-       3. TO-DO LIST RURAL (MOTOR ANALÍTICO SEMAFÓRICO)
+       3. TO-DO LIST RURAL (MOTOR ANALÍTICO DETERMINÍSTICO SEMAFÓRICO)
        ========================================================================= -->
   <section class="section-container" id="secao-todo" aria-labelledby="todo-heading">
     <div class="section-header-row">
       <div>
-        <div class="section-badge">Motor Analítico Auditável</div>
+        <div class="section-badge">Ações recomendadas</div>
         <h3 id="todo-heading" class="section-title">
-          <span>📋</span> To-Do List Rural — Ações Prioritárias do Dia
+          <span>📋</span> Pendências prioritárias
         </h3>
         <p class="section-desc">
-          Lista inteligente gerada pelo cruzamento entre o consumo do rebanho, prazos de validade e saldos atuais para evitar prejuízos.
+          Confira os alertas, resolva o que for urgente e marque cada item tratado.
         </p>
       </div>
 
-      <!-- Barra de Filtros Rápidos -->
-      <div class="filter-pills" id="alert-filters" role="group" aria-label="Filtrar Alertas por Urgência">
-        <button type="button" class="pill-btn active" data-filter="all">
-          Todos ({{ alertas|length }})
+      <!-- Barra de Filtros Rápidos Semafóricos -->
+      <div class="filter-pills" id="alert-filters" role="group" aria-label="Filtrar Alertas por Urgência Semafórica">
+        <button type="button" class="pill-btn active" data-filter="all" id="filter-btn-all">
+          Todos (<span id="count-all">{{ alertas|length }}</span>)
         </button>
-        <button type="button" class="pill-btn pill-urgent" data-filter="ALTA">
-          🔴 Crítico ({{ kpis.alta_prioridade }})
+        <button type="button" class="pill-btn pill-urgent" data-filter="ALTA" id="filter-btn-alta">
+          🔴 Crítico (<span id="count-alta">{{ kpis.alta_prioridade }}</span>)
         </button>
-        <button type="button" class="pill-btn pill-warning" data-filter="MEDIA">
-          🟡 Atenção ({{ kpis.media_prioridade }})
+        <button type="button" class="pill-btn pill-warning" data-filter="MEDIA" id="filter-btn-media">
+          🟡 Atenção (<span id="count-media">{{ kpis.media_prioridade }}</span>)
         </button>
-        <button type="button" class="pill-btn pill-normal" data-filter="BAIXA">
-          🟢 Normal ({{ kpis.baixa_prioridade }})
+        <button type="button" class="pill-btn pill-normal" data-filter="BAIXA" id="filter-btn-baixa">
+          🟢 Normal (<span id="count-baixa">{{ kpis.baixa_prioridade }}</span>)
         </button>
       </div>
     </div>
 
-    <!-- Lista de Cards To-Do -->
+    <!-- Lista de Cards da To-Do List -->
     {% if alertas %}
       <div class="todo-list-grid" id="todo-alert-list" role="list">
         {% for alerta in alertas %}
@@ -173,16 +183,19 @@
                id="alerta-card-{{ forloop.counter }}"
                role="listitem">
             
-            <!-- Checkbox To-Do -->
+            <!-- Checkbox To-Do Interativo -->
             <div class="todo-check-wrapper">
-              <input type="checkbox" 
-                     class="todo-checkbox" 
-                     id="chk-alerta-{{ forloop.counter }}" 
-                     data-card-id="alerta-card-{{ forloop.counter }}"
-                     title="Marcar pendência como tratada">
+              <label class="custom-checkbox-container" title="Marcar esta pendência como tratada">
+                <input type="checkbox" 
+                       class="todo-checkbox" 
+                       id="chk-alerta-{{ forloop.counter }}" 
+                       data-card-id="alerta-card-{{ forloop.counter }}"
+                       onchange="tratarAlertaCheck(this)">
+                <span class="custom-checkmark"></span>
+              </label>
             </div>
 
-            <!-- Corpo do Alerta -->
+            <!-- Conteúdo Central do Alerta -->
             <div class="todo-content">
               <div class="todo-header-tags">
                 <span class="semaphore-badge {{ alerta.prioridade|lower }}">
@@ -190,15 +203,18 @@
                   Prioridade {{ alerta.prioridade }}
                   {% if alerta.prioridade == 'ALTA' %}(Crítico){% elif alerta.prioridade == 'MEDIA' %}(Atenção){% else %}(Normal){% endif %}
                 </span>
+                <span class="todo-completion-badge" role="status" aria-live="polite" hidden>Tratada</span>
 
                 <span class="todo-category-badge">{{ alerta.tipo_display|default:alerta.tipo }}</span>
 
                 {% if alerta.lote_animal_nome %}
-                  <span class="todo-lote-tag">🐂 {{ alerta.lote_animal_nome }}</span>
+                  <span class="todo-lote-tag" title="Lote bovino relacionado ao consumo deste insumo">
+                    🐂 {{ alerta.lote_animal_nome }}
+                  </span>
                 {% endif %}
 
                 {% if alerta.produto_id %}
-                  <a href="{% url 'estoque:produto_detalhe' alerta.produto_id %}" class="todo-product-link">
+                  <a href="{% url 'estoque:produto_detalhe' alerta.produto_id %}" class="todo-product-link" title="Ver ficha técnica completa">
                     {{ alerta.produto_nome }}
                   </a>
                 {% else %}
@@ -211,17 +227,17 @@
                 <strong>Justificativa Analítica:</strong> {{ alerta.justificativa }}
               </div>
 
-              <!-- Metadados de Suporte do Cálculo -->
+              <!-- Faixa de Metadados de Suporte do Diagnóstico -->
               <div class="todo-meta-strip">
                 {% if alerta.saldo is not None %}
                   <span class="meta-tag">
-                    <strong>Saldo:</strong> {{ alerta.saldo }} {{ alerta.unidade }}
+                    <strong>Saldo Atual:</strong> {{ alerta.saldo }} {{ alerta.unidade }}
                   </span>
                 {% endif %}
 
                 {% if alerta.estoque_minimo is not None %}
                   <span class="meta-tag">
-                    <strong>Estoque Mínimo:</strong> {{ alerta.estoque_minimo }} {{ alerta.unidade }}
+                    <strong>Mínimo:</strong> {{ alerta.estoque_minimo }} {{ alerta.unidade }}
                   </span>
                 {% endif %}
 
@@ -237,6 +253,16 @@
                   </span>
                 {% endif %}
 
+                {% if alerta.dias_validade is not None %}
+                  <span class="meta-tag {% if alerta.dias_validade < 0 %}meta-vencido{% elif alerta.dias_validade <= 30 %}meta-alerta{% endif %}">
+                    {% if alerta.dias_validade < 0 %}
+                      <strong>Vencido há:</strong> {{ alerta.dias_validade|stringformat:"+d"|slice:"1:" }} dias
+                    {% else %}
+                      <strong>Restam:</strong> {{ alerta.dias_validade }} dias
+                    {% endif %}
+                  </span>
+                {% endif %}
+
                 {% if alerta.lote %}
                   <span class="meta-tag">
                     <strong>Lote Fab.:</strong> {{ alerta.lote }}
@@ -244,24 +270,24 @@
                 {% endif %}
 
                 {% if alerta.valor_total %}
-                  <span class="meta-tag">
+                  <span class="meta-tag highlight-value">
                     <strong>Valor em Risco:</strong> R$ {{ alerta.valor_total|floatformat:2 }}
                   </span>
                 {% endif %}
               </div>
             </div>
 
-            <!-- Botões de Ação Rápida -->
+            <!-- Botões de Ação Rápida no Campo -->
             <div class="todo-actions">
               {% if alerta.produto_id %}
-                <a href="{% url 'estoque:produto_detalhe' alerta.produto_id %}" class="btn btn-xs btn-outline">
-                  Ficha Técnica
+                <a href="{% url 'estoque:produto_detalhe' alerta.produto_id %}" class="btn btn-xs btn-outline" title="Acessar histórico e detalhes">
+                  👁️ Ficha Técnica
                 </a>
-                <a href="{% url 'estoque:movimentacao_nova' %}?produto_id={{ alerta.produto_id }}" class="btn btn-xs btn-primary">
+                <a href="{% url 'estoque:movimentacao_nova' %}?produto_id={{ alerta.produto_id }}" class="btn btn-xs btn-primary-action" title="Registrar entrada ou saída imediata">
                   ➕ Movimentar
                 </a>
               {% else %}
-                <a href="{% url 'estoque:movimentacao_nova' %}" class="btn btn-xs btn-primary">
+                <a href="{% url 'estoque:movimentacao_nova' %}" class="btn btn-xs btn-primary-action" title="Registrar movimentação rural">
                   ➕ Ação Rural
                 </a>
               {% endif %}
@@ -271,66 +297,73 @@
         {% endfor %}
       </div>
     {% else %}
-      <div class="empty-state-card">
-        <div class="empty-icon">🌱</div>
+      <div class="empty-state-card" role="status">
+        <div class="empty-icon" aria-hidden="true">🌱</div>
         <h4>Nenhuma Pendência Rural no Momento!</h4>
-        <p>Todos os insumos estão acima do estoque mínimo e os lotes de animais possuem autonomia de suplementação adequada.</p>
-        <a href="{% url 'estoque:movimentacao_nova' %}" class="btn btn-primary btn-sm">
-          Registrar Nova Movimentação
+        <p>Todos os insumos estão acima do estoque mínimo e os lotes de animais possuem autonomia de suplementação adequada no Vale do Jamari.</p>
+        <a href="{% url 'estoque:movimentacao_nova' %}" class="btn btn-primary-agro btn-sm">
+          ➕ Registrar Nova Movimentação
         </a>
       </div>
     {% endif %}
   </section>
 
   <!-- =========================================================================
-       4. GESTÃO DE LOTES DE GADO (LoteAnimais)
+       4. GESTÃO E CONTROLE DE LOTES DE GADO (LoteAnimais)
        ========================================================================= -->
   <section class="section-container" id="secao-lotes" aria-labelledby="lotes-heading">
-    
     <div class="section-header-row">
       <div>
-        <div class="section-badge">Manejo Bovino de Precisão</div>
+        <div class="section-badge">Manejo Bovino de Precisão • RF03.4</div>
         <h3 id="lotes-heading" class="section-title">
-          <span>🐂</span> Gestão e Controle de Lotes de Gado (LoteAnimais)
+          <span>🐂</span> Lotes do rebanho
         </h3>
         <p class="section-desc">
-          Acompanhamento do rebanho: quantidade de cabeças, pasto atual, Escore Corporal (ECC 1-5) e consumo diário de suplementação mineral.
+          Cabeças, localização, condição corporal e autonomia do suplemento por lote.
         </p>
       </div>
       
       <div class="section-header-actions">
-        <button type="button" class="btn btn-sm btn-primary" onclick="abrirModalLote()" id="btn-novo-lote-topo">
+        <button type="button" class="btn btn-sm btn-primary-agro" onclick="abrirModalLote()" id="btn-novo-lote-topo">
           <span>➕</span> Novo Lote de Gado
         </button>
         
-        <!-- Alternador Cards / Tabela -->
+        <!-- Alternador Cards vs. Tabela -->
         <div class="view-toggle-group" role="group" aria-label="Alternar Visualização de Lotes">
-          <button type="button" class="view-toggle-btn active" id="btn-view-lotes-cards" onclick="alternarVisaoLotes('cards')" title="Ver em Cards">
+          <button type="button" class="view-toggle-btn active" id="btn-view-lotes-cards" onclick="alternarVisaoLotes('cards')" title="Visualização em Cards de Manejo">
             <span>🎴</span> Cards
           </button>
-          <button type="button" class="view-toggle-btn" id="btn-view-lotes-tabela" onclick="alternarVisaoLotes('tabela')" title="Ver em Tabela">
+          <button type="button" class="view-toggle-btn" id="btn-view-lotes-tabela" onclick="alternarVisaoLotes('tabela')" title="Visualização em Tabela Completa">
             <span>📋</span> Tabela
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Barra de Ferramentas de Lotes -->
+    <!-- Barra de Ferramentas e Busca de Lotes -->
     <div class="toolbar-card">
       <div class="toolbar-search-box">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="busca-lotes-input" class="search-input" placeholder="Buscar lote por nome, pasto ou categoria..." oninput="filtrarLotesDinamico()">
+        <span class="search-icon" aria-hidden="true">🔍</span>
+        <input type="text" 
+               id="busca-lotes-input" 
+               class="search-input" 
+               placeholder="Buscar lote por nome, pasto ou categoria..." 
+               oninput="filtrarLotesDinamico()"
+               aria-label="Buscar lote de gado">
+      </div>
+      <div class="toolbar-stats">
+        <span>Exibindo <strong>{{ lotes_animais|length }}</strong> lote(s) ativo(s)</span>
       </div>
     </div>
 
     <!-- 4.1 VISÃO EM CARDS (PADRÃO) -->
     <div class="lotes-cards-grid" id="container-lotes-cards">
       {% for lote in lotes_animais %}
-        <div class="lote-animal-card category-{{ lote.categoria|lower }}" 
-             data-categoria="{{ lote.categoria }}" 
-             data-nome="{{ lote.nome|lower }}" 
-             data-pasto="{{ lote.pasto_localizacao|lower }}"
-             id="card-lote-{{ lote.id }}">
+        <article class="lote-animal-card category-{{ lote.categoria|lower }}" 
+                 data-categoria="{{ lote.categoria }}" 
+                 data-nome="{{ lote.nome|lower }}" 
+                 data-pasto="{{ lote.pasto_localizacao|lower }}"
+                 id="card-lote-{{ lote.id }}">
           
           <div class="lote-top-bar">
             <div>
@@ -349,7 +382,7 @@
           </div>
 
           <div class="lote-pasto-row">
-            <span class="pasto-icon">🌾</span>
+            <span class="pasto-icon" aria-hidden="true">🌾</span>
             <span class="pasto-text"><strong>Pasto Atual:</strong> {{ lote.pasto_localizacao }}</span>
           </div>
 
@@ -361,29 +394,66 @@
                 <strong>{{ lote.escore_corporal }}</strong> / 5.0 • {{ lote.ecc_texto }}
               </span>
             </div>
-            <div class="ecc-meter-track">
+            <div class="ecc-meter-track" role="progressbar" aria-valuenow="{{ lote.escore_corporal }}" aria-valuemin="1" aria-valuemax="5">
               <div class="ecc-meter-fill {{ lote.ecc_class }}" style="width: {{ lote.ecc_percent }}%;"></div>
+            </div>
+            <div class="ecc-meter-scale" aria-hidden="true">
+              <span>1.0 (Crítico)</span>
+              <span>3.0 (Ideal)</span>
+              <span>5.0 (Sobrepeso)</span>
             </div>
           </div>
 
+          <!-- Informações Zootécnicas de Suplementação -->
           <div class="lote-suplemento-info">
             <div class="supl-row">
               <span class="supl-lbl">Consumo Diário:</span>
-              <span class="supl-val"><strong>{{ lote.consumo_diario_cabeca_g }} g/cab/dia</strong> (~{{ lote.consumo_diario_total_kg|floatformat:1 }} kg/dia)</span>
+              <span class="supl-val">
+                <strong>{{ lote.consumo_diario_cabeca_g }} g/cab/dia</strong> (~{{ lote.consumo_diario_total_kg|floatformat:1 }} kg/dia)
+              </span>
             </div>
+            <div class="supl-row">
+              <span class="supl-lbl">Insumo Vinculado:</span>
+              <span class="supl-val">
+                {% if lote.insumo_id %}
+                  <a href="{% url 'estoque:produto_detalhe' lote.insumo_id %}" class="supl-link">
+                    {{ lote.insumo_nome }}
+                  </a>
+                {% else %}
+                  <span class="text-muted">{{ lote.insumo_nome }}</span>
+                {% endif %}
+              </span>
+            </div>
+            <div class="supl-row">
+              <span class="supl-lbl">Autonomia Insumo:</span>
+              <span class="supl-val">
+                {% if lote.duracao_dias is not None %}
+                  <span class="badge-autonomia-{{ lote.status_cor }}">
+                    {{ lote.duracao_dias }} dia(s)
+                  </span>
+                {% else %}
+                  <span class="badge-autonomia-sem">Sem consumo registrado</span>
+                {% endif %}
+              </span>
+            </div>
+            {% if lote.observacoes %}
+              <div class="lote-obs" title="{{ lote.observacoes }}">
+                📝 {{ lote.observacoes|truncatechars:70 }}
+              </div>
+            {% endif %}
           </div>
 
           <div class="lote-card-footer">
-            <a href="{% url 'estoque:lote_editar' lote.id %}" class="btn btn-xs btn-outline">
-              ✏️ Editar
+            <a href="{% url 'estoque:lote_editar' lote.id %}" class="btn btn-xs btn-outline" id="btn-edit-lote-{{ lote.id }}">
+              ✏️ Editar Lote
             </a>
           </div>
 
-        </div>
+        </article>
       {% endfor %}
     </div>
 
-    <!-- 4.2 VISÃO EM TABELA -->
+    <!-- 4.2 VISÃO EM TABELA COMPLETA -->
     <div class="table-responsive-wrapper" id="container-lotes-tabela" style="display: none;">
       <table class="agrogado-table" id="tabela-lotes">
         <thead>
@@ -392,18 +462,47 @@
             <th>Categoria</th>
             <th>Cabeças</th>
             <th>Pasto / Localização</th>
-            <th>ECC (1-5)</th>
+            <th>Escore Corporal (ECC)</th>
+            <th>Consumo Diário Total</th>
+            <th>Insumo Suplementar</th>
+            <th>Autonomia</th>
             <th class="text-center">Ações</th>
           </tr>
         </thead>
         <tbody>
           {% for lote in lotes_animais %}
             <tr class="lote-tr" data-categoria="{{ lote.categoria }}" data-nome="{{ lote.nome|lower }}" data-pasto="{{ lote.pasto_localizacao|lower }}">
-              <td><strong>{{ lote.nome }}</strong></td>
+              <td>
+                <strong>{{ lote.nome }}</strong>
+                {% if lote.observacoes %}
+                  <span class="cat-sub-text">{{ lote.observacoes|truncatechars:40 }}</span>
+                {% endif %}
+              </td>
               <td><span class="lote-category-badge badge-{{ lote.categoria|lower }}">{{ lote.categoria_display }}</span></td>
               <td><span class="badge-cabecas-cell">{{ lote.quantidade_cabecas }}</span></td>
               <td>🌾 {{ lote.pasto_localizacao }}</td>
-              <td><span class="ecc-value-tag {{ lote.ecc_class }}"><strong>{{ lote.escore_corporal }}</strong></span></td>
+              <td>
+                <span class="ecc-value-tag {{ lote.ecc_class }}">
+                  <strong>{{ lote.escore_corporal }}</strong> • {{ lote.ecc_texto }}
+                </span>
+              </td>
+              <td>~{{ lote.consumo_diario_total_kg|floatformat:1 }} kg/dia ({{ lote.consumo_diario_cabeca_g }} g/cab)</td>
+              <td>
+                {% if lote.insumo_id %}
+                  <a href="{% url 'estoque:produto_detalhe' lote.insumo_id %}" class="product-title-link">
+                    {{ lote.insumo_nome }}
+                  </a>
+                {% else %}
+                  <span class="text-muted">Não vinculado</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if lote.duracao_dias is not None %}
+                  <span class="badge-autonomia-{{ lote.status_cor }}">{{ lote.duracao_dias }} dia(s)</span>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
               <td class="text-center actions-cell">
                 <a href="{% url 'estoque:lote_editar' lote.id %}" class="btn-action-icon" title="Editar Lote">✏️</a>
               </td>
@@ -416,25 +515,51 @@
   </section>
 
   <!-- =========================================================================
-       5. ESTOQUE DE INSUMOS (Insumos)
+       5. ESTOQUE DE INSUMOS DA PROPRIEDADE (Insumos)
        ========================================================================= -->
   <section class="section-container" id="secao-estoque" aria-labelledby="estoque-heading">
-    
     <div class="section-header-row">
       <div>
-        <div class="section-badge">Inventário em Tempo Real</div>
+        <div class="section-badge">Inventário em Tempo Real • RF01 / RF03</div>
         <h3 id="estoque-heading" class="section-title">
-          <span>📦</span> Estoque e Insumos da Propriedade (Insumos)
+          <span>📦</span> Estoque de insumos
         </h3>
         <p class="section-desc">
-          Controle organizado de saldos por grupos (Sanidade, Nutrição, Manejo), estoque mínimo, datas de validade e valoração financeira.
+          Consulte saldos, níveis mínimos, validade e valor dos produtos cadastrados.
         </p>
       </div>
 
       <div class="section-header-actions">
-        <a href="{% url 'estoque:movimentacao_nova' %}" class="btn btn-sm btn-primary">
+        <a href="{% url 'estoque:movimentacao_nova' %}" class="btn btn-sm btn-primary-agro">
           <span>➕</span> Registrar Movimentação
         </a>
+      </div>
+    </div>
+
+    <!-- Barra de Filtros e Busca da Tabela de Insumos -->
+    <div class="toolbar-card">
+      <div class="toolbar-search-box">
+        <span class="search-icon" aria-hidden="true">🔍</span>
+        <input type="text" 
+               id="busca-insumos-input" 
+               class="search-input" 
+               placeholder="Buscar insumo por nome ou categoria..." 
+               oninput="filtrarInsumosDinamico()"
+               aria-label="Buscar insumo na tabela">
+      </div>
+      <div class="filter-pills" id="insumos-group-filters" role="group" aria-label="Filtrar Insumos por Grupo">
+        <button type="button" class="pill-btn active" data-grupo="all" onclick="filtrarGrupoInsumos('all', this)">
+          Todos
+        </button>
+        <button type="button" class="pill-btn" data-grupo="Sanidade" onclick="filtrarGrupoInsumos('Sanidade', this)">
+          💉 Sanidade
+        </button>
+        <button type="button" class="pill-btn" data-grupo="Nutrição" onclick="filtrarGrupoInsumos('Nutrição', this)">
+          🌾 Nutrição
+        </button>
+        <button type="button" class="pill-btn" data-grupo="Manejo" onclick="filtrarGrupoInsumos('Manejo', this)">
+          🚜 Manejo
+        </button>
       </div>
     </div>
 
@@ -448,36 +573,56 @@
             <th>Quantidade Atual</th>
             <th>Estoque Mínimo</th>
             <th>Situação Semafórica</th>
+            <th>Cobertura</th>
             <th>Validade</th>
-            <th>Valor Unitário</th>
             <th>Valor Total</th>
             <th class="text-center">Ações Rápidas</th>
           </tr>
         </thead>
         <tbody>
           {% for item in produtos_insumos %}
-            <tr class="insumo-row">
+            <tr class="insumo-row" 
+                data-nome="{{ item.nome|lower }}" 
+                data-categoria="{{ item.categoria_display|lower }}" 
+                data-grupo="{{ item.grupo_categoria }}">
+              
+              <!-- Nome e Unidade -->
               <td class="insumo-name-cell">
                 <a href="{% url 'estoque:produto_detalhe' item.id %}" class="product-title-link">
                   <strong>{{ item.nome }}</strong>
                 </a>
                 <span class="insumo-unit-pill">{{ item.unidade }}</span>
               </td>
+
+              <!-- Grupo e Categoria -->
               <td>
                 <span class="badge-cat-grupo badge-grupo-{{ item.grupo_classe }}">
                   {{ item.grupo_categoria }}
                 </span>
+                <span class="cat-sub-text">{{ item.categoria_display }}</span>
               </td>
+
+              <!-- Quantidade Atual e Barra de Nível -->
               <td class="insumo-saldo-cell">
-                <span class="saldo-destaque">{{ item.saldo }}</span> <span class="saldo-unit">{{ item.unidade }}</span>
+                <div class="saldo-text-row">
+                  <span class="saldo-destaque">{{ item.saldo }}</span> 
+                  <span class="saldo-unit">{{ item.unidade }}</span>
+                </div>
+                <div class="saldo-progress-bar" title="Nível em relação ao estoque de segurança: {{ item.percentual_nivel }}%">
+                  <div class="progress-fill status-{{ item.status_cor }}" style="width: {{ item.percentual_nivel }}%;"></div>
+                </div>
               </td>
+
+              <!-- Estoque Mínimo -->
               <td>
                 {% if item.estoque_minimo %}
                   <strong>{{ item.estoque_minimo }}</strong> {{ item.unidade }}
                 {% else %}
-                  <span class="text-muted">—</span>
+                  <span class="text-muted" title="Sem estoque mínimo cadastrado">—</span>
                 {% endif %}
               </td>
+
+              <!-- Situação Semafórica -->
               <td>
                 <span class="semaphore-badge {{ item.status_estoque|lower }}">
                   <span class="dot" aria-hidden="true"></span>
@@ -490,20 +635,40 @@
                   {% endif %}
                 </span>
               </td>
+
+              <!-- Cobertura Estimada -->
               <td>
-                {% if item.validade_proxima %}
-                  <span>📅 {{ item.validade_proxima|date:"d/m/Y" }}</span>
+                {% if item.cobertura_dias is not None %}
+                  <strong>{{ item.cobertura_dias }} dia(s)</strong>
+                  <span class="cobertura-sub">
+                    {% if item.cobertura_fonte == 'zootecnico' %}🌾 Consumo Rebanho{% else %}📊 Histórico Saídas{% endif %}
+                  </span>
                 {% else %}
                   <span class="text-muted">—</span>
                 {% endif %}
               </td>
+
+              <!-- Próxima Validade -->
               <td>
-                {% if item.valor_unitario %}
-                  R$ {{ item.valor_unitario|floatformat:2 }}
+                {% if item.validade %}
+                  <div class="validade-cell">
+                    <span>📅 {{ item.validade|date:"d/m/Y" }}</span>
+                    {% if item.dias_validade is not None %}
+                      {% if item.dias_validade < 0 %}
+                        <span class="badge-val-vencido">Vencido</span>
+                      {% elif item.dias_validade <= 30 %}
+                        <span class="badge-val-alerta">{{ item.dias_validade }}d restantes</span>
+                      {% else %}
+                        <span class="badge-val-ok">{{ item.dias_validade }}d</span>
+                      {% endif %}
+                    {% endif %}
+                  </div>
                 {% else %}
                   <span class="text-muted">—</span>
                 {% endif %}
               </td>
+
+              <!-- Valor Total Estocado -->
               <td>
                 {% if item.valor_total %}
                   <strong>R$ {{ item.valor_total|floatformat:2 }}</strong>
@@ -511,10 +676,13 @@
                   <span class="text-muted">—</span>
                 {% endif %}
               </td>
+
+              <!-- Ações Rápidas -->
               <td class="text-center actions-cell">
-                <a href="{% url 'estoque:produto_detalhe' item.id %}" class="btn-action-icon" title="Ver Detalhes">👁️</a>
-                <a href="{% url 'estoque:movimentacao_nova' %}?produto_id={{ item.id }}" class="btn-action-icon btn-action-add" title="Movimentar Estoque">➕</a>
+                <a href="{% url 'estoque:produto_detalhe' item.id %}" class="btn-action-icon" title="Ficha Técnica Detalhada">👁️</a>
+                <a href="{% url 'estoque:movimentacao_nova' %}?produto_id={{ item.id }}" class="btn-action-icon btn-action-add" title="Registrar Entrada/Saída">➕</a>
               </td>
+
             </tr>
           {% endfor %}
         </tbody>
@@ -526,45 +694,96 @@
 </div>
 
 <!-- =========================================================================
-     MODAL DE CADASTRO DE LOTE
+     MODAL DE CADASTRO DE NOVO LOTE DE ANIMAIS (LoteAnimais)
      ========================================================================= -->
-<div class="modal-backdrop-custom" id="modal-lote-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-  <div class="modal-dialog-custom" style="background: white; padding: 2rem; border-radius: 8px; width: 100%; max-width: 500px;">
-    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-      <h4>🐂 Cadastrar Novo Lote de Animais</h4>
-      <button type="button" class="btn-close-modal" onclick="fecharModalLote()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+<div class="modal-backdrop-custom" id="modal-lote-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-lote-title">
+  <div class="modal-dialog-custom">
+    <div class="modal-header-custom">
+      <div class="modal-title-wrap">
+        <span class="modal-icon" aria-hidden="true">🐂</span>
+        <h4 id="modal-lote-title">Cadastrar Novo Lote de Animais</h4>
+      </div>
+      <button type="button" class="btn-close-modal-custom" onclick="fecharModalLote()" aria-label="Fechar janela modal">×</button>
     </div>
-    <div class="modal-body">
+
+    <div class="modal-body-custom">
       <form method="POST" action="{% url 'estoque:lote_novo' %}" id="form-novo-lote">
         {% csrf_token %}
-        <div class="form-group" style="margin-bottom: 1rem;">
-          <label for="id_nome">Nome do Lote / Identificação:</label>
-          <input type="text" name="nome" id="id_nome" class="form-control" placeholder="Ex: Lote 01 - Garrotes Nelore" required style="width: 100%; padding: 0.5rem;">
+        
+        <div class="form-grid-modal">
+          <!-- Nome do Lote -->
+          <div class="form-group-modal full-width">
+            <label for="id_nome">Identificação / Nome do Lote: <span class="required-star">*</span></label>
+            <input type="text" name="nome" id="id_nome" class="form-control-modal" placeholder="Ex: Lote 05 - Garrotes Nelore" required>
+          </div>
+
+          <!-- Categoria -->
+          <div class="form-group-modal">
+            <label for="id_categoria">Categoria Zootécnica: <span class="required-star">*</span></label>
+            <select name="categoria" id="id_categoria" class="form-control-modal">
+              <option value="CORTE" selected>Corte</option>
+              <option value="LEITE">Leite</option>
+              <option value="RECRIA">Recria</option>
+              <option value="CRIA">Cria</option>
+            </select>
+          </div>
+
+          <!-- Quantidade de Cabeças -->
+          <div class="form-group-modal">
+            <label for="id_quantidade_cabecas">Quantidade de Cabeças: <span class="required-star">*</span></label>
+            <input type="number" name="quantidade_cabecas" id="id_quantidade_cabecas" class="form-control-modal" value="60" min="1" required>
+          </div>
+
+          <!-- Pasto / Localização -->
+          <div class="form-group-modal">
+            <label for="id_pasto_localizacao">Pasto / Localização:</label>
+            <input type="text" name="pasto_localizacao" id="id_pasto_localizacao" class="form-control-modal" placeholder="Ex: Piquete 04 (Brachiaria)">
+          </div>
+
+          <!-- Escore Corporal ECC (1-5) -->
+          <div class="form-group-modal">
+            <label for="id_escore_corporal">Escore Corporal (ECC 1-5):</label>
+            <input type="number" step="0.1" min="1.0" max="5.0" name="escore_corporal" id="id_escore_corporal" class="form-control-modal" value="3.2">
+            <small class="form-hint">Faixa 3.0 a 4.0 representa condição corporal ideal.</small>
+          </div>
+
+          <!-- Peso Médio Estimado -->
+          <div class="form-group-modal">
+            <label for="id_peso_medio_estimado">Peso Médio Estimado (kg):</label>
+            <input type="number" step="0.01" name="peso_medio_estimado" id="id_peso_medio_estimado" class="form-control-modal" placeholder="Ex: 380.00">
+          </div>
+
+          <!-- Consumo Diário por Cabeça -->
+          <div class="form-group-modal">
+            <label for="id_consumo_diario_cabeca">Consumo Diário (kg/cab/dia):</label>
+            <input type="number" step="0.001" name="consumo_diario_cabeca" id="id_consumo_diario_cabeca" class="form-control-modal" value="0.120">
+            <small class="form-hint">Padrão mineral: 0.120 kg (120 g/cab/dia).</small>
+          </div>
+
+          <!-- Insumo Suplementar Vinculado -->
+          <div class="form-group-modal full-width">
+            <label for="id_insumo_suplementar">Insumo Suplementar Vinculado:</label>
+            <select name="insumo_suplementar" id="id_insumo_suplementar" class="form-control-modal">
+              <option value="">-- Nenhum Insumo Vinculado --</option>
+              {% for p in produtos_insumos %}
+                {% if p.grupo_categoria == 'Nutrição' or p.categoria_display == 'Suplementos / Ração' %}
+                  <option value="{{ p.id }}">{{ p.nome }} (Saldo: {{ p.saldo }} {{ p.unidade }})</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+            <small class="form-hint">Permite calcular a autonomia exata de dias de suplemento para este lote.</small>
+          </div>
+
+          <!-- Observações -->
+          <div class="form-group-modal full-width">
+            <label for="id_observacoes">Observações de Manejo / Saúde:</label>
+            <textarea name="observacoes" id="id_observacoes" class="form-control-modal" rows="2" placeholder="Observações veterinárias, pesagens ou rotinas de manejo do lote..."></textarea>
+          </div>
         </div>
-        <div class="form-group" style="margin-bottom: 1rem;">
-          <label for="id_quantidade_cabecas">Quantidade de Cabeças:</label>
-          <input type="number" name="quantidade_cabecas" id="id_quantidade_cabecas" class="form-control" value="50" min="1" required style="width: 100%; padding: 0.5rem;">
-        </div>
-        <div class="form-group" style="margin-bottom: 1rem;">
-          <label for="id_categoria">Categoria:</label>
-          <select name="categoria" id="id_categoria" class="form-control" style="width: 100%; padding: 0.5rem;">
-            <option value="CORTE">Corte</option>
-            <option value="LEITE">Leite</option>
-            <option value="RECRIA">Recria</option>
-            <option value="CRIA">Cria</option>
-          </select>
-        </div>
-        <div class="form-group" style="margin-bottom: 1rem;">
-          <label for="id_pasto_localizacao">Pasto / Localização:</label>
-          <input type="text" name="pasto_localizacao" id="id_pasto_localizacao" class="form-control" placeholder="Ex: Pasto Sede 03" style="width: 100%; padding: 0.5rem;">
-        </div>
-        <div class="form-group" style="margin-bottom: 1.5rem;">
-          <label for="id_escore_corporal">Escore de Condição Corporal (ECC 1-5):</label>
-          <input type="number" step="0.1" min="1.0" max="5.0" name="escore_corporal" id="id_escore_corporal" class="form-control" value="3.0" style="width: 100%; padding: 0.5rem;">
-        </div>
-        <div class="modal-footer-actions" style="display: flex; justify-content: flex-end; gap: 1rem;">
+
+        <div class="modal-footer-custom">
           <button type="button" class="btn btn-outline" onclick="fecharModalLote()">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Salvar Lote</button>
+          <button type="submit" class="btn btn-primary-agro">Salvar Lote de Gado</button>
         </div>
       </form>
     </div>
@@ -572,52 +791,233 @@
 </div>
 
 <!-- =========================================================================
-     SCRIPTS JAVASCRIPT DE INTERATIVIDADE
+     SCRIPTS JAVASCRIPT NATIVOS (INTERATIVIDADE E FILTROS RURAIS)
      ========================================================================= -->
 <script>
+  /* -------------------------------------------------------------------------
+     1. Alternância de Visualização de Lotes (Cards vs. Tabela)
+     ------------------------------------------------------------------------- */
   function alternarVisaoLotes(modo) {
     const cardContainer = document.getElementById('container-lotes-cards');
     const tableContainer = document.getElementById('container-lotes-tabela');
     const btnCards = document.getElementById('btn-view-lotes-cards');
     const btnTable = document.getElementById('btn-view-lotes-tabela');
 
+    if (!cardContainer || !tableContainer) return;
+
     if (modo === 'cards') {
       cardContainer.style.display = 'grid';
       tableContainer.style.display = 'none';
       btnCards.classList.add('active');
       btnTable.classList.remove('active');
+      try { localStorage.setItem('agrogado_lotes_view', 'cards'); } catch(e){}
     } else {
       cardContainer.style.display = 'none';
       tableContainer.style.display = 'block';
       btnTable.classList.add('active');
       btnCards.classList.remove('active');
+      try { localStorage.setItem('agrogado_lotes_view', 'tabela'); } catch(e){}
     }
   }
 
-  function filtrarLotesDinamico() {
-    const termo = document.getElementById('busca-lotes-input').value.toLowerCase();
-    const cards = document.querySelectorAll('.lote-animal-card');
+  /* -------------------------------------------------------------------------
+     2. Filtro Rápido da To-Do List por Prioridade Semafórica
+     ------------------------------------------------------------------------- */
+  function aplicarFiltroAlertas(prioridade) {
+    const cards = document.querySelectorAll('.todo-card');
+    const filterButtons = document.querySelectorAll('#alert-filters .pill-btn');
 
+    // Atualiza botões
+    filterButtons.forEach(btn => {
+      if (btn.getAttribute('data-filter') === prioridade) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    // Filtra os cards
     cards.forEach(card => {
-      const nome = card.getAttribute('data-nome') || '';
-      const pasto = card.getAttribute('data-pasto') || '';
-      if (nome.includes(termo) || pasto.includes(termo)) {
-        card.style.display = 'flex';
+      const cardPrio = card.getAttribute('data-prioridade');
+      if (prioridade === 'all' || cardPrio === prioridade) {
+        card.style.display = 'grid';
       } else {
         card.style.display = 'none';
       }
     });
   }
 
+  // Event listeners para botões de filtro da To-Do List
+  document.addEventListener('DOMContentLoaded', function() {
+    const filterButtons = document.querySelectorAll('#alert-filters .pill-btn');
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const prioridade = this.getAttribute('data-filter');
+        aplicarFiltroAlertas(prioridade);
+      });
+    });
+
+    // Pílulas clicáveis do KPI de semáforo
+    const kpiShortcuts = document.querySelectorAll('.interactive-kpi-pill');
+    kpiShortcuts.forEach(pill => {
+      pill.addEventListener('click', function(e) {
+        e.preventDefault();
+        const p = this.getAttribute('data-kpi-filter');
+        aplicarFiltroAlertas(p);
+        const secao = document.getElementById('secao-todo');
+        if (secao) {
+          secao.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+
+    // Recupera visão salva de lotes
+    try {
+      const salva = localStorage.getItem('agrogado_lotes_view');
+      if (salva === 'tabela') alternarVisaoLotes('tabela');
+    } catch(e){}
+
+    // Restaura checkboxes tratados salvos na sessão
+    try {
+      const tratados = JSON.parse(sessionStorage.getItem('agrogado_alertas_tratados') || '[]');
+      tratados.forEach(id => {
+        const chk = document.getElementById(id);
+        if (chk) {
+          chk.checked = true;
+          const cardId = chk.getAttribute('data-card-id');
+          const card = document.getElementById(cardId);
+          if (card) {
+            card.classList.add('todo-done');
+            const status = card.querySelector('.todo-completion-badge');
+            if (status) status.hidden = false;
+          }
+        }
+      });
+    } catch(e){}
+  });
+
+  /* -------------------------------------------------------------------------
+     3. Checkbox de Alertas da To-Do List (Tratar pendência)
+     ------------------------------------------------------------------------- */
+  function tratarAlertaCheck(checkbox) {
+    const cardId = checkbox.getAttribute('data-card-id');
+    const card = document.getElementById(cardId);
+    if (!card) return;
+
+    card.classList.toggle('todo-done', checkbox.checked);
+    const status = card.querySelector('.todo-completion-badge');
+    if (status) status.hidden = !checkbox.checked;
+
+    // Persiste no sessionStorage
+    try {
+      let tratados = JSON.parse(sessionStorage.getItem('agrogado_alertas_tratados') || '[]');
+      if (checkbox.checked) {
+        if (!tratados.includes(checkbox.id)) tratados.push(checkbox.id);
+      } else {
+        tratados = tratados.filter(id => id !== checkbox.id);
+      }
+      sessionStorage.setItem('agrogado_alertas_tratados', JSON.stringify(tratados));
+    } catch(e){}
+  }
+
+  /* -------------------------------------------------------------------------
+     4. Busca Dinâmica de Lotes de Gado (Vanilla JS)
+     ------------------------------------------------------------------------- */
+  function filtrarLotesDinamico() {
+    const termo = (document.getElementById('busca-lotes-input').value || '').toLowerCase().trim();
+    
+    // Cards
+    const cards = document.querySelectorAll('.lote-animal-card');
+    cards.forEach(card => {
+      const nome = card.getAttribute('data-nome') || '';
+      const pasto = card.getAttribute('data-pasto') || '';
+      const cat = (card.getAttribute('data-categoria') || '').toLowerCase();
+      if (!termo || nome.includes(termo) || pasto.includes(termo) || cat.includes(termo)) {
+        card.style.display = 'flex';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    // Tabela
+    const rows = document.querySelectorAll('#tabela-lotes tbody tr');
+    rows.forEach(tr => {
+      const nome = tr.getAttribute('data-nome') || '';
+      const pasto = tr.getAttribute('data-pasto') || '';
+      const cat = (tr.getAttribute('data-categoria') || '').toLowerCase();
+      if (!termo || nome.includes(termo) || pasto.includes(termo) || cat.includes(termo)) {
+        tr.style.display = '';
+      } else {
+        tr.style.display = 'none';
+      }
+    });
+  }
+
+  /* -------------------------------------------------------------------------
+     5. Filtro Dinâmico de Insumos (Busca por Texto e Filtro por Grupo)
+     ------------------------------------------------------------------------- */
+  let grupoInsumosAtivo = 'all';
+
+  function filtrarGrupoInsumos(grupo, btn) {
+    grupoInsumosAtivo = grupo;
+    const buttons = document.querySelectorAll('#insumos-group-filters .pill-btn');
+    buttons.forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    filtrarInsumosDinamico();
+  }
+
+  function filtrarInsumosDinamico() {
+    const termo = (document.getElementById('busca-insumos-input').value || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('#tabela-insumos tbody tr');
+
+    rows.forEach(tr => {
+      const nome = tr.getAttribute('data-nome') || '';
+      const cat = tr.getAttribute('data-categoria') || '';
+      const grupo = tr.getAttribute('data-grupo') || '';
+
+      const matchTexto = !termo || nome.includes(termo) || cat.includes(termo);
+      const matchGrupo = (grupoInsumosAtivo === 'all') || (grupo === grupoInsumosAtivo);
+
+      if (matchTexto && matchGrupo) {
+        tr.style.display = '';
+      } else {
+        tr.style.display = 'none';
+      }
+    });
+  }
+
+  /* -------------------------------------------------------------------------
+     6. Modal de Novo Lote de Animais
+     ------------------------------------------------------------------------- */
   function abrirModalLote() {
     const modal = document.getElementById('modal-lote-backdrop');
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+      modal.classList.add('modal-open');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => {
+        const inputNome = document.getElementById('id_nome');
+        if (inputNome) inputNome.focus();
+      }, 100);
+    }
   }
 
   function fecharModalLote() {
     const modal = document.getElementById('modal-lote-backdrop');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+      modal.classList.remove('modal-open');
+      document.body.style.overflow = '';
+    }
   }
+
+  // Fechamento com tecla ESC e clique fora
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') fecharModalLote();
+  });
+
+  document.addEventListener('click', function(e) {
+    const modal = document.getElementById('modal-lote-backdrop');
+    if (modal && e.target === modal) fecharModalLote();
+  });
 </script>
 
 {% endblock %}
