@@ -13,11 +13,297 @@ Gera ~80 registros contemplando as 8 categorias do desafio e os casos de teste:
 
 from datetime import date, timedelta
 from decimal import Decimal
-from .models import Produto, Lote, Movimentacao, LoteAnimais
+from .models import (
+    AtivoRural,
+    Lote,
+    LoteAnimais,
+    ManutencaoAtivo,
+    Movimentacao,
+    Produto,
+    TransferenciaRecurso,
+)
+
+
+def popular_ativos_demonstracao():
+    hoje = date.today()
+    trator, _ = Produto.objects.get_or_create(
+        nome="Trator Massey Ferguson MF 4275 - TR-001",
+        defaults={
+            'categoria': 'MAQUINAS',
+            'tipo_item': 'Trator agrícola',
+            'unidade': 'un',
+            'tipo_embalagem': 'UNIDADE',
+            'fabricante': 'Massey Ferguson',
+            'modelo': 'MF 4275',
+            'numero_serie': 'MF4275-AGRO-001',
+            'ano_fabricacao': 2021,
+            'estoque_minimo': Decimal('1.00'),
+            'preco_referencia': Decimal('230000.00'),
+            'descricao': 'Trator da frota para preparo de pasto e transporte de insumos.',
+        },
+    )
+    if not trator.tipo_item:
+        trator.tipo_item = 'Trator agrícola'
+        trator.save(update_fields=['tipo_item'])
+    trator_ativo, _ = AtivoRural.objects.get_or_create(
+        produto=trator,
+        defaults={
+            'status_manutencao': 'OPERACIONAL',
+            'consumo_medio': Decimal('12.00'),
+            'unidade_consumo': 'L_H',
+        },
+    )
+    Movimentacao.objects.get_or_create(
+        produto=trator,
+        tipo='ENTRADA',
+        data_movimentacao=hoje - timedelta(days=180),
+        defaults={
+            'quantidade': Decimal('1.00'),
+            'horimetro_h': Decimal('1280.5'),
+            'preco_unitario': Decimal('230000.00'),
+            'valor_total_pago': Decimal('230000.00'),
+            'fornecedor': 'Concessionária Rural Jamari',
+            'comprador': 'Setor de Patrimônio',
+            'responsavel': 'Almoxarife da Fazenda',
+        },
+    )
+
+    caminhonete, _ = Produto.objects.get_or_create(
+        nome="Caminhonete Toyota Hilux - Frota 01",
+        defaults={
+            'categoria': 'VEICULOS',
+            'tipo_item': 'Caminhonete 4x4',
+            'unidade': 'un',
+            'tipo_embalagem': 'UNIDADE',
+            'fabricante': 'Toyota',
+            'modelo': 'Hilux CD 4x4',
+            'ano_fabricacao': 2022,
+            'placa': 'ABC1D23',
+            'chassi': '9BR00000000000001',
+            'estoque_minimo': Decimal('1.00'),
+            'preco_referencia': Decimal('190000.00'),
+            'descricao': 'Veículo de apoio à pecuária e transporte entre retiros.',
+        },
+    )
+    if not caminhonete.tipo_item:
+        caminhonete.tipo_item = 'Caminhonete 4x4'
+        caminhonete.save(update_fields=['tipo_item'])
+    caminhonete_ativo, _ = AtivoRural.objects.get_or_create(
+        produto=caminhonete,
+        defaults={
+            'status_manutencao': 'OPERACIONAL',
+            'consumo_medio': Decimal('8.50'),
+            'unidade_consumo': 'KM_L',
+        },
+    )
+    Movimentacao.objects.get_or_create(
+        produto=caminhonete,
+        tipo='ENTRADA',
+        data_movimentacao=hoje - timedelta(days=120),
+        defaults={
+            'quantidade': Decimal('1.00'),
+            'odometro_km': Decimal('45210.5'),
+            'preco_unitario': Decimal('190000.00'),
+            'valor_total_pago': Decimal('190000.00'),
+            'fornecedor': 'Concessionária Vale do Jamari',
+            'comprador': 'Setor de Patrimônio',
+            'responsavel': 'Almoxarife da Fazenda',
+        },
+    )
+    ManutencaoAtivo.objects.get_or_create(
+        ativo=trator_ativo,
+        tipo='PREVENTIVA',
+        data=hoje - timedelta(days=45),
+        descricao='Revisão preventiva de demonstração',
+        defaults={
+            'horimetro_h': Decimal('1250.0'),
+            'custo': Decimal('850.00'),
+            'fornecedor': 'Oficina Rural Jamari',
+            'responsavel': 'Mecânico da fazenda',
+        },
+    )
+
+    ferramenta, _ = Produto.objects.get_or_create(
+        nome='Motosserra STIHL MS 250 - FERR-001',
+        defaults={
+            'categoria': 'FERRAMENTAS',
+            'tipo_item': 'Motosserra',
+            'unidade': 'un',
+            'fabricante': 'STIHL',
+            'modelo': 'MS 250',
+            'estoque_minimo': Decimal('1.00'),
+            'preco_referencia': Decimal('2800.00'),
+            'descricao': 'Ferramenta de manejo de cercas e limpeza de pasto.',
+        },
+    )
+    if not ferramenta.tipo_item:
+        ferramenta.tipo_item = 'Motosserra'
+        ferramenta.save(update_fields=['tipo_item'])
+    Movimentacao.objects.get_or_create(
+        produto=ferramenta,
+        tipo='ENTRADA',
+        data_movimentacao=hoje - timedelta(days=90),
+        defaults={
+            'quantidade': Decimal('2.00'),
+            'preco_unitario': Decimal('2800.00'),
+            'valor_total_pago': Decimal('5600.00'),
+            'fornecedor': 'Ferramentas Vale do Jamari',
+            'comprador': 'Setor de Patrimônio',
+            'responsavel': 'Almoxarife da Fazenda',
+        },
+    )
+
+    oleo, _ = Produto.objects.get_or_create(
+        nome='Óleo lubrificante de motor 15W40 - tambor',
+        defaults={
+            'categoria': 'COMBUSTIVEIS',
+            'tipo_item': 'Óleo de motor 15W40',
+            'unidade': 'L',
+            'tipo_embalagem': 'TAMBOR',
+            'volume_embalagem_ml': Decimal('200000.00'),
+            'estoque_minimo': Decimal('100.00'),
+            'preco_referencia': Decimal('18.00'),
+            'descricao': 'Óleo lubrificante para motores da frota agrícola.',
+        },
+    )
+    if not oleo.tipo_item:
+        oleo.tipo_item = 'Óleo de motor 15W40'
+        oleo.save(update_fields=['tipo_item'])
+    Movimentacao.objects.get_or_create(
+        produto=oleo,
+        tipo='ENTRADA',
+        data_movimentacao=hoje - timedelta(days=30),
+        defaults={
+            'quantidade': Decimal('200.00'),
+            'preco_unitario': Decimal('18.00'),
+            'valor_total_pago': Decimal('3600.00'),
+            'fornecedor': 'Lubrificantes Rondônia',
+            'comprador': 'Setor de Compras',
+            'responsavel': 'Almoxarife da Fazenda',
+        },
+    )
+    Movimentacao.objects.get_or_create(
+        produto=oleo,
+        tipo='SAIDA',
+        data_movimentacao=hoje - timedelta(days=20),
+        ativo=trator_ativo,
+        defaults={
+            'quantidade': Decimal('12.00'),
+            'destino': trator.nome,
+            'responsavel': 'Mecânico da fazenda',
+            'origem_recurso': 'COMPRA_EXTERNA',
+        },
+    )
+
+    diesel = Produto.objects.filter(nome='Óleo Diesel S10 Granel').first()
+    if diesel:
+        Movimentacao.objects.get_or_create(
+            produto=diesel,
+            tipo='SAIDA',
+            data_movimentacao=hoje - timedelta(days=5),
+            ativo=caminhonete_ativo,
+            defaults={
+                'quantidade': Decimal('60.00'),
+                'destino': caminhonete.nome,
+                'responsavel': 'Operador da frota',
+                'origem_recurso': 'COMPRA_EXTERNA',
+                'odometro_km': Decimal('45600.0'),
+            },
+        )
+
+    milho, _ = Produto.objects.get_or_create(
+        nome='Milho em grão - Produção própria',
+        defaults={
+            'categoria': 'INSUMOS',
+            'tipo_item': 'Milho em grão',
+            'unidade': 'kg',
+            'estoque_minimo': Decimal('100.00'),
+            'descricao': 'Grão colhido na propriedade para uso interno e formulação de ração.',
+        },
+    )
+    milho_entrada, _ = Movimentacao.objects.get_or_create(
+        produto=milho,
+        tipo='ENTRADA',
+        data_movimentacao=hoje - timedelta(days=60),
+        defaults={
+            'quantidade': Decimal('500.00'),
+            'origem_recurso': 'PRODUCAO_PROPRIA',
+            'destino': 'Silo da fazenda',
+            'responsavel': 'Equipe agrícola',
+        },
+    )
+    racao, _ = Produto.objects.get_or_create(
+        nome='Ração bovina - Produção interna',
+        defaults={
+            'categoria': 'SUPLEMENTOS',
+            'tipo_item': 'Ração bovina',
+            'unidade': 'saco',
+            'tipo_embalagem': 'SACO',
+            'peso_embalagem_kg': Decimal('25.000'),
+            'estoque_minimo': Decimal('20.00'),
+            'descricao': 'Ração produzida internamente a partir de grãos da propriedade.',
+        },
+    )
+    milho_saida, _ = Movimentacao.objects.get_or_create(
+        produto=milho,
+        tipo='SAIDA',
+        data_movimentacao=hoje - timedelta(days=40),
+        defaults={
+            'quantidade': Decimal('350.00'),
+            'origem_recurso': 'PRODUCAO_PROPRIA',
+            'destino': racao.nome,
+            'responsavel': 'Equipe da fábrica de ração',
+        },
+    )
+    racao_entrada, _ = Movimentacao.objects.get_or_create(
+        produto=racao,
+        tipo='ENTRADA',
+        data_movimentacao=hoje - timedelta(days=40),
+        defaults={
+            'quantidade': Decimal('14.00'),
+            'origem_recurso': 'PRODUCAO_PROPRIA',
+            'destino': 'Confinamento',
+            'responsavel': 'Equipe da fábrica de ração',
+        },
+    )
+    TransferenciaRecurso.objects.get_or_create(
+        produto_origem=milho,
+        produto_destino=racao,
+        data=hoje - timedelta(days=40),
+        defaults={
+            'quantidade_origem': Decimal('350.00'),
+            'quantidade_destino': Decimal('14.00'),
+            'origem_recurso': 'PRODUCAO_PROPRIA',
+            'destino_tipo': 'PRODUCAO_PROPRIA',
+            'local_destino': 'Confinamento',
+            'responsavel': 'Equipe da fábrica de ração',
+            'observacoes': '350 kg de milho convertidos em 14 sacos de ração de 25 kg.',
+            'movimentacao_saida': milho_saida,
+            'movimentacao_entrada': racao_entrada,
+        },
+    )
+
+    tipos_de_demo = {
+        'Fungicida Tebuconazol 200 EC': 'Fungicida',
+        'Vacina Antiaftosa Bivalente 50 Doses': 'Vacina antiaftosa',
+        'Oxitetraciclina L.A. 200mg/ml 50ml': 'Antibiótico injetável',
+        'Óleo Diesel S10 Granel': 'Diesel S10',
+        'Ureia Agrícola 46% N': 'Fertilizante nitrogenado',
+        'Semente Brachiaria brizantha cv. Marandu': 'Semente de pastagem',
+        'Filtro de Óleo Lubrificante Trator Valtra BH180': 'Filtro de óleo',
+        'Sal Mineral Bovino 80 Fos 30kg': 'Suplemento mineral',
+        'Respirador Facial com Filtro de Carvão Ativado 3M': 'Respirador facial',
+        'Herbicida Glifosato 480 SL': 'Herbicida',
+    }
+    for nome, tipo_item in tipos_de_demo.items():
+        Produto.objects.filter(nome=nome, tipo_item='').update(tipo_item=tipo_item)
 
 
 def popular_dados_demonstracao():
     # Limpa dados existentes para garantir idempotência na demonstração
+    TransferenciaRecurso.objects.all().delete()
+    ManutencaoAtivo.objects.all().delete()
+    AtivoRural.objects.all().delete()
     Movimentacao.objects.all().delete()
     Lote.objects.all().delete()
     LoteAnimais.objects.all().delete()
@@ -31,6 +317,7 @@ def popular_dados_demonstracao():
     p_fungicida = Produto.objects.create(
         nome="Fungicida Tebuconazol 200 EC",
         categoria="DEFENSIVOS",
+        tipo_item="Fungicida",
         unidade="L",
         estoque_minimo=Decimal("50.00"),
         preco_referencia=Decimal("95.00"),
@@ -62,6 +349,7 @@ def popular_dados_demonstracao():
     p_vacina = Produto.objects.create(
         nome="Vacina Antiaftosa Bivalente 50 Doses",
         categoria="MEDICAMENTOS",
+        tipo_item="Vacina antiaftosa",
         unidade="dose",
         estoque_minimo=Decimal("100.00"),
         preco_referencia=Decimal("2.80"),
@@ -95,6 +383,7 @@ def popular_dados_demonstracao():
     p_oxitetra = Produto.objects.create(
         nome="Oxitetraciclina L.A. 200mg/ml 50ml",
         categoria="MEDICAMENTOS",
+        tipo_item="Antibiótico injetável",
         unidade="frasco",
         estoque_minimo=Decimal("5.00"),
         preco_referencia=Decimal("42.00"),
@@ -123,6 +412,7 @@ def popular_dados_demonstracao():
     p_diesel = Produto.objects.create(
         nome="Óleo Diesel S10 Granel",
         categoria="COMBUSTIVEIS",
+        tipo_item="Diesel S10",
         unidade="L",
         estoque_minimo=Decimal("1000.00"),
         preco_referencia=Decimal("6.15"),
@@ -158,6 +448,7 @@ def popular_dados_demonstracao():
     p_ureia = Produto.objects.create(
         nome="Ureia Agrícola 46% N",
         categoria="FERTILIZANTES",
+        tipo_item="Fertilizante nitrogenado",
         unidade="sc",
         estoque_minimo=Decimal("40.00"),
         preco_referencia=Decimal("145.00"),
@@ -187,6 +478,7 @@ def popular_dados_demonstracao():
     p_semente = Produto.objects.create(
         nome="Semente Brachiaria brizantha cv. Marandu",
         categoria="SEMENTES",
+        tipo_item="Semente de pastagem",
         unidade="kg",
         estoque_minimo=Decimal("200.00"),
         preco_referencia=Decimal("28.00"),
@@ -215,6 +507,7 @@ def popular_dados_demonstracao():
     p_filtro = Produto.objects.create(
         nome="Filtro de Óleo Lubrificante Trator Valtra BH180",
         categoria="MANUTENCAO",
+        tipo_item="Filtro de óleo",
         unidade="un",
         estoque_minimo=Decimal("3.00"),
         preco_referencia=Decimal("85.00"),
@@ -239,6 +532,7 @@ def popular_dados_demonstracao():
     p_sal = Produto.objects.create(
         nome="Sal Mineral Bovino 80 Fos 30kg",
         categoria="SUPLEMENTOS",
+        tipo_item="Suplemento mineral",
         unidade="sc",
         estoque_minimo=Decimal("30.00"),
         preco_referencia=Decimal("88.00"),
@@ -268,6 +562,7 @@ def popular_dados_demonstracao():
     p_epi = Produto.objects.create(
         nome="Respirador Facial com Filtro de Carvão Ativado 3M",
         categoria="EPI",
+        tipo_item="Respirador facial",
         unidade="un",
         estoque_minimo=Decimal("5.00"),
         preco_referencia=Decimal("65.00"),
@@ -286,6 +581,7 @@ def popular_dados_demonstracao():
     p_glifosato = Produto.objects.create(
         nome="Herbicida Glifosato 480 SL",
         categoria="DEFENSIVOS",
+        tipo_item="Herbicida",
         unidade="L",
         estoque_minimo=Decimal("100.00"),
         preco_referencia=Decimal("38.00"),
@@ -362,6 +658,8 @@ def popular_dados_demonstracao():
         insumo_suplementar=p_sal,
         observacoes="Bezerros recém-desmamados. Requer atenção ao ECC e imunização preventiva."
     )
+
+    popular_ativos_demonstracao()
 
     total_movs = Movimentacao.objects.count()
     return total_movs

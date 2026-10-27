@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   
   <!-- Folha de Estilos Principal -->
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=6">
   
   <!-- Chart.js para Visualização Temporal (RF03.6) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -82,6 +82,11 @@
           <a href="{% url 'estoque:produto_lista' %}" class="nav-link {% if request.resolver_match.url_name == 'produto_lista' or request.resolver_match.url_name == 'produto_detalhe' %}active{% endif %}" id="nav-produtos">
             <span class="nav-icon" aria-hidden="true">📦</span>
             <span class="nav-text">Insumos</span>
+          </a>
+
+          <a href="{% url 'estoque:recursos' %}" class="nav-link {% if request.resolver_match.url_name == 'recursos' or request.resolver_match.url_name == 'ativo_atualizar' or request.resolver_match.url_name == 'manutencao_nova' or request.resolver_match.url_name == 'transferencia_nova' %}active{% endif %}" id="nav-recursos">
+            <span class="nav-icon" aria-hidden="true">🚜</span>
+            <span class="nav-text">Recursos</span>
           </a>
 
           <a href="{% url 'estoque:consumo' %}" class="nav-link {% if request.resolver_match.url_name == 'consumo' or request.resolver_match.url_name == 'consumo_produto' %}active{% endif %}" id="nav-consumo">

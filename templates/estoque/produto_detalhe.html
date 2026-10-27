@@ -137,6 +137,27 @@
 
   </div>
 
+  <section class="section-container" aria-label="Especificações do produto">
+    <div class="section-header-row">
+      <div>
+        <div class="section-badge">Cadastro Rural</div>
+        <h3 class="section-title">Embalagem e identificação</h3>
+      </div>
+    </div>
+    <div class="mini-kpi-strip">
+      {% if produto.tipo_item %}<div class="mini-kpi-item"><span class="mini-kpi-lbl">Tipo</span><strong class="mini-kpi-val">{{ produto.tipo_item }}</strong></div>{% endif %}
+      <div class="mini-kpi-item"><span class="mini-kpi-lbl">Embalagem</span><strong class="mini-kpi-val">{{ produto.tipo_embalagem }} · {% if produto.embalagem_em_caixa %}Com caixa{% else %}Sem caixa{% endif %}</strong></div>
+      {% if produto.peso_embalagem_kg %}<div class="mini-kpi-item"><span class="mini-kpi-lbl">Peso por embalagem</span><strong class="mini-kpi-val">{{ produto.peso_embalagem_kg }} kg</strong></div>{% endif %}
+      {% if produto.volume_embalagem_ml %}<div class="mini-kpi-item"><span class="mini-kpi-lbl">Volume por embalagem</span><strong class="mini-kpi-val">{{ produto.volume_embalagem_ml }} ml</strong></div>{% endif %}
+      {% if produto.fabricante %}<div class="mini-kpi-item"><span class="mini-kpi-lbl">Fabricante</span><strong class="mini-kpi-val">{{ produto.fabricante }}</strong></div>{% endif %}
+      {% if produto.modelo %}<div class="mini-kpi-item"><span class="mini-kpi-lbl">Modelo</span><strong class="mini-kpi-val">{{ produto.modelo }}</strong></div>{% endif %}
+      {% if produto.numero_serie %}<div class="mini-kpi-item"><span class="mini-kpi-lbl">Série / patrimônio</span><strong class="mini-kpi-val">{{ produto.numero_serie }}</strong></div>{% endif %}
+      {% if produto.placa %}<div class="mini-kpi-item"><span class="mini-kpi-lbl">Placa</span><strong class="mini-kpi-val">{{ produto.placa }}</strong></div>{% endif %}
+      {% if produto.chassi %}<div class="mini-kpi-item"><span class="mini-kpi-lbl">Chassi</span><strong class="mini-kpi-val">{{ produto.chassi }}</strong></div>{% endif %}
+      {% if produto.ano_fabricacao %}<div class="mini-kpi-item"><span class="mini-kpi-lbl">Ano</span><strong class="mini-kpi-val">{{ produto.ano_fabricacao }}</strong></div>{% endif %}
+    </div>
+  </section>
+
   <!-- Lotes Cadastrados do Insumo -->
   <section class="section-container">
     <div class="section-header-row">
@@ -224,6 +245,9 @@
               <th>Quantidade</th>
               <th>Lote</th>
               <th>Fornecedor / Origem</th>
+              <th>Comprador</th>
+              <th>Valor pago</th>
+              <th>Odômetro / horímetro</th>
               <th>Destino / Aplicação</th>
               <th>Responsável</th>
             </tr>
@@ -250,6 +274,9 @@
                   {% if m.lote %}{{ m.lote.numero_lote }}{% else %}<span class="text-muted-empty">—</span>{% endif %}
                 </td>
                 <td>{{ m.fornecedor|default:"—" }}</td>
+                <td>{{ m.comprador|default:"—" }}</td>
+                <td>{% if m.valor_total_pago is not None %}R$ {{ m.valor_total_pago|floatformat:2 }}{% else %}—{% endif %}</td>
+                <td>{% if m.odometro_km is not None %}{{ m.odometro_km }} km{% elif m.horimetro_h is not None %}{{ m.horimetro_h }} h{% else %}—{% endif %}</td>
                 <td>{{ m.destino|default:"—" }}</td>
                 <td>{{ m.responsavel|default:"—" }}</td>
               </tr>

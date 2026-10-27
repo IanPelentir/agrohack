@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+
+{% block title %}Cadastrar Produto | AGROGADO{% endblock %}
+
+{% block content %}
+<div class="form-page-container">
+  <div class="page-top-bar">
+    <div class="page-title-group">
+      <nav class="breadcrumb-nav" aria-label="Navegação estrutural">
+        <a href="{% url 'estoque:painel' %}">Painel</a>
+        <span class="breadcrumb-sep">/</span>
+        <a href="{% url 'estoque:produto_lista' %}">Produtos</a>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-current">Cadastro</span>
+      </nav>
+      <h2 class="page-heading">Cadastrar produto da propriedade</h2>
+      <p class="page-subheading">Escolha a categoria para ver os campos de embalagem ou identificação patrimonial correspondentes.</p>
+    </div>
+  </div>
+
+  <div class="form-card-modern">
+    <form method="post">
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
+
+      <div class="form-section-header">
+        <span class="section-num-badge">1</span>
+        <div><h4>Identificação do produto</h4><p class="form-section-sub">Tipo, unidade e referência no catálogo.</p></div>
+      </div>
+      <div class="form-grid-modern">
+        {% for field in form %}
+          {% if field.name == 'nome' or field.name == 'categoria' or field.name == 'tipo_item' or field.name == 'unidade' or field.name == 'fabricante' %}
+            <div class="form-group-item">
+              <label class="form-label-custom" {% if field.name == 'tipo_item' %}id="label-tipo-item"{% endif %} for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="required-star">*</span>{% endif %}</label>
+              {{ field }}
+              {% if field.name == 'tipo_item' %}
+                <datalist id="sugestoes-tipo-item">
+                  <option value="Caminhonete"></option>
+                  <option value="Trator agrícola"></option>
+                  <option value="Óleo lubrificante"></option>
+                  <option value="Ferramenta manual"></option>
+                  <option value="Ração bovina"></option>
+                </datalist>
+              {% endif %}
+              {% if field.help_text %}<div class="form-help-text">{{ field.help_text }}</div>{% endif %}
+              {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="form-section-header" style="margin-top: 2rem;" data-product-group="INSUMO">
+        <span class="section-num-badge">2</span>
+        <div><h4>Embalagem e especificações</h4><p class="form-section-sub">Informe caixa, peso do saco ou volume do frasco conforme o produto.</p></div>
+      </div>
+      <div class="form-grid-modern">
+        {% for field in form %}
+          {% if field.name == 'tipo_embalagem' or field.name == 'embalagem_em_caixa' %}
+            <div class="form-group-item" data-product-group="INSUMO">
+              <label class="form-label-custom" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}<div class="form-help-text">{{ field.help_text }}</div>{% endif %}
+              {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
+          {% elif field.name == 'peso_embalagem_kg' %}
+            <div class="form-group-item" data-product-group="INSUMO" data-package-kind="SACO">
+              <label class="form-label-custom" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}<div class="form-help-text">{{ field.help_text }}</div>{% endif %}
+              {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
+          {% elif field.name == 'volume_embalagem_ml' %}
+            <div class="form-group-item" data-product-group="INSUMO" data-package-kind="FRASCO,TAMBOR">
+              <label class="form-label-custom" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}<div class="form-help-text">{{ field.help_text }}</div>{% endif %}
+              {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="form-section-header" style="margin-top: 2rem;" data-product-group="ATIVO">
+        <span class="section-num-badge">3</span>
+        <div><h4>Identificação do patrimônio</h4><p class="form-section-sub">Marca, modelo, fabricação e número patrimonial do ativo.</p></div>
+      </div>
+      <div class="form-section-header" style="margin-top: 2rem;" data-product-group="FERRAMENTA">
+        <span class="section-num-badge">3</span>
+        <div><h4>Ferramenta e controle unitário</h4><p class="form-section-sub">Ferramentas são controladas por unidades, sem embalagem de insumo.</p></div>
+      </div>
+      <div class="form-grid-modern">
+        {% for field in form %}
+          {% if field.name == 'modelo' or field.name == 'numero_serie' or field.name == 'ano_fabricacao' %}
+            <div class="form-group-item" data-product-group="ATIVO">
+              <label class="form-label-custom" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}<div class="form-help-text">{{ field.help_text }}</div>{% endif %}
+              {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
+          {% elif field.name == 'placa' or field.name == 'chassi' %}
+            <div class="form-group-item" data-product-group="VEICULO">
+              <label class="form-label-custom" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}<div class="form-help-text">{{ field.help_text }}</div>{% endif %}
+              {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="form-section-header" style="margin-top: 2rem;">
+        <span class="section-num-badge">4</span>
+        <div><h4>Estoque e observações</h4><p class="form-section-sub">Referências usadas nos alertas e na avaliação de estoque.</p></div>
+      </div>
+      <div class="form-grid-modern">
+        {% for field in form %}
+          {% if field.name == 'estoque_minimo' or field.name == 'preco_referencia' or field.name == 'descricao' %}
+            <div class="form-group-item">
+              <label class="form-label-custom" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}<div class="form-help-text">{{ field.help_text }}</div>{% endif %}
+              {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="form-actions-footer">
+        <a href="{% url 'estoque:produto_lista' %}" class="btn btn-outline-agro">Cancelar</a>
+        <button type="submit" class="btn btn-primary-agro btn-lg">Cadastrar Produto</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+  const categoriaProduto = document.getElementById('id_categoria');
+  const embalagemProduto = document.getElementById('id_tipo_embalagem');
+
+  function atualizarCadastroProduto() {
+    const categoria = categoriaProduto.value;
+    const embalagem = embalagemProduto.value;
+    const ehFerramenta = categoria === 'FERRAMENTAS';
+    const ehAtivo = ['MAQUINAS', 'VEICULOS'].includes(categoria);
+    const ehInsumo = !ehAtivo && !ehFerramenta;
+
+    document.querySelectorAll('[data-product-group]').forEach((elemento) => {
+      const grupo = elemento.dataset.productGroup;
+      elemento.hidden = grupo === 'INSUMO' ? !ehInsumo
+        : grupo === 'ATIVO' ? !ehAtivo
+        : grupo === 'VEICULO' ? categoria !== 'VEICULOS'
+        : grupo === 'FERRAMENTA' ? !ehFerramenta
+        : false;
+    });
+    document.querySelectorAll('[data-package-kind]').forEach((elemento) => {
+      elemento.hidden = !ehInsumo || !elemento.dataset.packageKind.split(',').includes(embalagem);
+    });
+    document.getElementById('id_unidade').placeholder = ehAtivo || ehFerramenta ? 'un' : 'kg, L, frasco, dose, saco';
+
+    const labelTipo = document.getElementById('label-tipo-item');
+    const campoTipo = document.getElementById('id_tipo_item');
+    const configuracaoTipo = categoria === 'VEICULOS'
+      ? ['Tipo de veículo', 'Caminhonete, motocicleta, caminhão...']
+      : categoria === 'MAQUINAS'
+        ? ['Tipo de máquina ou implemento', 'Trator, roçadeira, plantadeira...']
+        : categoria === 'FERRAMENTAS'
+          ? ['Tipo de ferramenta', 'Chave, furadeira, motosserra...']
+          : categoria === 'COMBUSTIVEIS'
+            ? ['Tipo de combustível ou óleo', 'Diesel S10, óleo 15W40, óleo hidráulico...']
+            : ['Tipo específico', 'Ração, sal mineral, vacina, mangueira...'];
+    labelTipo.firstChild.textContent = `${configuracaoTipo[0]} `;
+    campoTipo.placeholder = configuracaoTipo[1];
+  }
+
+  categoriaProduto.addEventListener('change', atualizarCadastroProduto);
+  embalagemProduto.addEventListener('change', atualizarCadastroProduto);
+  atualizarCadastroProduto();
+</script>
+{% endblock %}

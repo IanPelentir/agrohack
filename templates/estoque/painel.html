@@ -153,7 +153,7 @@
           <span>📋</span> Pendências prioritárias
         </h3>
         <p class="section-desc">
-          Confira os alertas, resolva o que for urgente e marque cada item tratado.
+          Alertas mostram condições atuais; tarefas registram o que precisa ser feito e podem ser concluídas separadamente.
         </p>
       </div>
 
@@ -183,18 +183,6 @@
                id="alerta-card-{{ forloop.counter }}"
                role="listitem">
             
-            <!-- Checkbox To-Do Interativo -->
-            <div class="todo-check-wrapper">
-              <label class="custom-checkbox-container" title="Marcar esta pendência como tratada">
-                <input type="checkbox" 
-                       class="todo-checkbox" 
-                       id="chk-alerta-{{ forloop.counter }}" 
-                       data-card-id="alerta-card-{{ forloop.counter }}"
-                       onchange="tratarAlertaCheck(this)">
-                <span class="custom-checkmark"></span>
-              </label>
-            </div>
-
             <!-- Conteúdo Central do Alerta -->
             <div class="todo-content">
               <div class="todo-header-tags">
@@ -279,6 +267,16 @@
 
             <!-- Botões de Ação Rápida no Campo -->
             <div class="todo-actions">
+              {% if alerta.pendencia_aberta_id %}
+                <form method="post" action="{% url 'estoque:pendencia_status' alerta.pendencia_aberta_id %}">
+                  {% csrf_token %}<input type="hidden" name="concluida" value="true">
+                  <button class="btn btn-xs btn-primary-action" type="submit">Tarefa feita</button>
+                </form>
+              {% else %}
+                <a href="{% url 'estoque:pendencia_nova' %}?titulo={{ alerta.tipo_display|urlencode }}%3A%20{{ alerta.produto_nome|urlencode }}&descricao={{ alerta.justificativa|urlencode }}&prioridade={{ alerta.prioridade }}{% if alerta.produto_id %}&produto={{ alerta.produto_id }}{% endif %}{% if alerta.ativo_id %}&ativo={{ alerta.ativo_id }}{% endif %}" class="btn btn-xs btn-primary-action" title="Adicionar esta recomendação às minhas tarefas">
+                  + Criar tarefa
+                </a>
+              {% endif %}
               {% if alerta.produto_id %}
                 <a href="{% url 'estoque:produto_detalhe' alerta.produto_id %}" class="btn btn-xs btn-outline" title="Acessar histórico e detalhes">
                   👁️ Ficha Técnica
@@ -305,6 +303,77 @@
           ➕ Registrar Nova Movimentação
         </a>
       </div>
+    {% endif %}
+
+    <div class="section-header-row" style="margin-top: 2rem;">
+      <div>
+        <div class="section-badge">Acompanhamento manual</div>
+        <h4 class="section-title">Adicionar pendência</h4>
+      </div>
+    </div>
+    <form method="post" action="{% url 'estoque:pendencia_nova' %}" class="form-grid-modern">
+      {% csrf_token %}
+      {% for field in pendencia_form %}
+        <div class="form-group-item">
+          <label class="form-label-custom" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<div class="form-help-text">{{ field.help_text }}</div>{% endif %}
+          {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+        </div>
+      {% endfor %}
+      <div class="form-actions-footer"><button class="btn btn-primary-agro" type="submit">Salvar pendência</button></div>
+    </form>
+
+    <div class="section-header-row" style="margin-top: 2rem;">
+      <div>
+        <div class="section-badge">{{ pendencias_abertas|length }} abertas</div>
+        <h4 class="section-title">Minhas tarefas</h4>
+      </div>
+    </div>
+    {% if pendencias_abertas %}
+      <div class="todo-list-grid" role="list" aria-label="Tarefas abertas">
+        {% for pendencia in pendencias_abertas %}
+          <article class="todo-card priority-{{ pendencia.prioridade|lower }}" role="listitem">
+            <div class="todo-content">
+              <div class="todo-header-tags">
+                <span class="semaphore-badge {{ pendencia.prioridade|lower }}">{{ pendencia.get_prioridade_display }}</span>
+                <strong>{{ pendencia.titulo }}</strong>
+                {% if pendencia.produto %}<a class="todo-product-link" href="{% url 'estoque:produto_detalhe' pendencia.produto_id %}">{{ pendencia.produto.nome }}</a>{% endif %}
+                {% if pendencia.ativo %}<span class="todo-product-text">{{ pendencia.ativo.produto.nome }}</span>{% endif %}
+                {% if pendencia.prazo %}<span class="meta-tag">Prazo: {{ pendencia.prazo|date:"d/m/Y" }}</span>{% endif %}
+              </div>
+              {% if pendencia.descricao %}<div class="todo-justification">{{ pendencia.descricao }}</div>{% endif %}
+            </div>
+            <div class="todo-actions">
+              <form method="post" action="{% url 'estoque:pendencia_status' pendencia.id %}">
+                {% csrf_token %}<input type="hidden" name="concluida" value="true">
+                <button class="btn btn-xs btn-primary-action" type="submit">Tarefa feita</button>
+              </form>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-muted">Nenhuma tarefa aberta. Os alertas automáticos continuam sendo recalculados independentemente.</p>
+    {% endif %}
+
+    {% if pendencias_concluidas %}
+      <details style="margin-top: 1.25rem;">
+        <summary>Tarefas concluídas ({{ pendencias_concluidas|length }})</summary>
+        <div class="todo-list-grid" role="list" style="margin-top: 1rem;">
+          {% for pendencia in pendencias_concluidas %}
+            <article class="todo-card todo-done" role="listitem">
+              <div class="todo-content"><strong>{{ pendencia.titulo }}</strong>{% if pendencia.concluida_em %}<span class="form-help-text">Concluída em {{ pendencia.concluida_em|date:"d/m/Y H:i" }}</span>{% endif %}</div>
+              <div class="todo-actions">
+                <form method="post" action="{% url 'estoque:pendencia_status' pendencia.id %}">
+                  {% csrf_token %}<input type="hidden" name="concluida" value="false">
+                  <button class="btn btn-xs btn-outline" type="submit">Reabrir</button>
+                </form>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      </details>
     {% endif %}
   </section>
 
@@ -877,48 +946,7 @@
       if (salva === 'tabela') alternarVisaoLotes('tabela');
     } catch(e){}
 
-    // Restaura checkboxes tratados salvos na sessão
-    try {
-      const tratados = JSON.parse(sessionStorage.getItem('agrogado_alertas_tratados') || '[]');
-      tratados.forEach(id => {
-        const chk = document.getElementById(id);
-        if (chk) {
-          chk.checked = true;
-          const cardId = chk.getAttribute('data-card-id');
-          const card = document.getElementById(cardId);
-          if (card) {
-            card.classList.add('todo-done');
-            const status = card.querySelector('.todo-completion-badge');
-            if (status) status.hidden = false;
-          }
-        }
-      });
-    } catch(e){}
   });
-
-  /* -------------------------------------------------------------------------
-     3. Checkbox de Alertas da To-Do List (Tratar pendência)
-     ------------------------------------------------------------------------- */
-  function tratarAlertaCheck(checkbox) {
-    const cardId = checkbox.getAttribute('data-card-id');
-    const card = document.getElementById(cardId);
-    if (!card) return;
-
-    card.classList.toggle('todo-done', checkbox.checked);
-    const status = card.querySelector('.todo-completion-badge');
-    if (status) status.hidden = !checkbox.checked;
-
-    // Persiste no sessionStorage
-    try {
-      let tratados = JSON.parse(sessionStorage.getItem('agrogado_alertas_tratados') || '[]');
-      if (checkbox.checked) {
-        if (!tratados.includes(checkbox.id)) tratados.push(checkbox.id);
-      } else {
-        tratados = tratados.filter(id => id !== checkbox.id);
-      }
-      sessionStorage.setItem('agrogado_alertas_tratados', JSON.stringify(tratados));
-    } catch(e){}
-  }
 
   /* -------------------------------------------------------------------------
      4. Busca Dinâmica de Lotes de Gado (Vanilla JS)

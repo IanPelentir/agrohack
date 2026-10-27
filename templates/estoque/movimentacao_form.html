@@ -49,19 +49,36 @@
         <!-- Produto / Insumo -->
         <div class="form-group-item">
           <label for="id_produto" class="form-label-custom">
-            Insumo / Produto <span class="required-star">*</span>
+            Produto / ativo da fazenda <span class="required-star">*</span>
           </label>
-          <select name="produto" id="id_produto" class="form-control-custom" required onchange="atualizarDicaSaldo(this)">
-            <option value="">Selecione o insumo...</option>
+          <select name="produto" id="id_produto" class="form-control-custom" required>
+            <option value="">Selecione um item...</option>
             {% for p in produtos %}
-              <option value="{{ p.id }}" 
+                    <option value="{{ p.id }}"
                       data-saldo="{{ p.saldo }}" 
                       data-unidade="{{ p.unidade }}"
+                      data-tipo-item="{{ p.tipo_item }}"
+                      data-categoria="{{ p.categoria }}"
+                      data-categoria-label="{{ p.categoria_display }}"
+                      data-embalagem="{{ p.tipo_embalagem }}"
+                      data-caixa="{{ p.embalagem_em_caixa|yesno:'Sim,Não' }}"
+                      data-peso="{{ p.peso_embalagem_kg|default_if_none:'' }}"
+                      data-volume="{{ p.volume_embalagem_ml|default_if_none:'' }}"
+                      data-fabricante="{{ p.fabricante }}"
+                      data-modelo="{{ p.modelo }}"
+                      data-serie="{{ p.numero_serie }}"
+                      data-placa="{{ p.placa }}"
+                      data-chassi="{{ p.chassi }}"
+                      data-ano-fabricacao="{{ p.ano_fabricacao|default_if_none:'' }}"
                       {% if p.id == produto_selecionado_id %}selected{% endif %}>
-                {{ p.nome }} ({{ p.unidade }}) — Saldo disponível: {{ p.saldo }} {{ p.unidade }}
+                {{ p.nome }}{% if p.tipo_item %} · {{ p.tipo_item }}{% endif %} ({{ p.unidade }}) — Saldo: {{ p.saldo }} {{ p.unidade }}
               </option>
             {% endfor %}
           </select>
+          <div class="product-movement-context" id="contexto-produto" hidden aria-live="polite">
+            <strong id="contexto-categoria"></strong>
+            <span id="contexto-especificacoes"></span>
+          </div>
           <div class="form-help-text" id="help-saldo-info">
             Selecione o produto que terá sua quantidade movimentada.
           </div>
@@ -72,11 +89,11 @@
           <label for="id_tipo" class="form-label-custom">
             Tipo de Movimentação <span class="required-star">*</span>
           </label>
-          <select name="tipo" id="id_tipo" class="form-control-custom" required onchange="ajustarTipoFluxo(this)">
-            <option value="SAIDA" selected>⬆️ Saída (Aplicação no Campo / Consumo Animal)</option>
-            <option value="ENTRADA">⬇️ Entrada (Compra / Reposição de Estoque)</option>
+          <select name="tipo" id="id_tipo" class="form-control-custom" required>
+            <option value="SAIDA" {% if tipo_selecionado == 'SAIDA' %}selected{% endif %}>Saída</option>
+            <option value="ENTRADA" {% if tipo_selecionado == 'ENTRADA' %}selected{% endif %}>Entrada</option>
           </select>
-          <div class="form-help-text">Saídas abatem do saldo; Entradas somam ao saldo existente.</div>
+          <div class="form-help-text" id="ajuda-fluxo">Entrada aumenta o saldo; saída reduz o saldo disponível.</div>
         </div>
 
         <!-- Quantidade -->
@@ -84,23 +101,23 @@
           <label for="id_quantidade" class="form-label-custom">
             Quantidade Movimentada <span class="required-star">*</span>
           </label>
-          <input type="number" step="0.01" min="0.01" name="quantidade" id="id_quantidade" class="form-control-custom" placeholder="Ex: 50.00" required>
-          <div class="form-help-text">Informe o valor na unidade de medida do produto.</div>
+          <input type="number" step="0.01" min="0.01" name="quantidade" id="id_quantidade" class="form-control-custom" placeholder="Ex: 50.00" value="{{ form_values.quantidade|default:'' }}" required>
+          <div class="form-help-text" id="ajuda-quantidade">Informe o valor na unidade de medida do produto.</div>
         </div>
 
         <!-- Data da Movimentação -->
         <div class="form-group-item">
-          <label for="id_data" class="form-label-custom">
+          <label for="id_data_movimentacao" class="form-label-custom">
             Data da Operação <span class="required-star">*</span>
           </label>
-          <input type="date" name="data" id="id_data" class="form-control-custom" value="{{ data_padrao }}" required>
+          <input type="date" name="data_movimentacao" id="id_data_movimentacao" class="form-control-custom" value="{{ form_values.data_movimentacao|default:data_padrao }}" required>
           <div class="form-help-text">Data em que a movimentação realmente ocorreu no campo.</div>
         </div>
 
       </div>
 
       <!-- Seção 2: Rastreabilidade, Lote e Destino -->
-      <div class="form-section-header" style="margin-top: 2rem;">
+      <div class="form-section-header" style="margin-top: 2rem;" data-show-for="INSUMO">
         <span class="section-num-badge">2</span>
         <div>
           <h4>Rastreabilidade, Lote e Destino (Campos Opcionais)</h4>
@@ -108,47 +125,122 @@
         </div>
       </div>
 
+      <div class="form-section-header" style="margin-top: 2rem;" data-show-for="ATIVO">
+        <span class="section-num-badge">2</span>
+        <div>
+          <h4>Patrimônio e movimentação do ativo</h4>
+          <p class="form-section-sub">Máquinas e veículos são controlados por unidade, local e responsável.</p>
+        </div>
+      </div>
+
+      <div class="form-section-header" style="margin-top: 2rem;" data-show-for="FERRAMENTA">
+        <span class="section-num-badge">2</span>
+        <div>
+          <h4>Ferramenta / utensílio</h4>
+          <p class="form-section-sub">Controle individual por unidade e responsável.</p>
+        </div>
+      </div>
+
+      <div class="form-section-header" style="margin-top: 2rem;" data-show-for="VEICULO">
+        <span class="section-num-badge">3</span>
+        <div>
+          <h4>Veículo e quilometragem</h4>
+          <p class="form-section-sub">Registre a leitura do odômetro nesta entrada ou saída.</p>
+        </div>
+      </div>
+
+      <div class="form-section-header" style="margin-top: 2rem;" data-show-for="MAQUINA">
+        <span class="section-num-badge">3</span>
+        <div>
+          <h4>Máquina e horas de operação</h4>
+          <p class="form-section-sub">Registre a leitura do horímetro nesta entrada ou saída.</p>
+        </div>
+      </div>
+
       <div class="form-grid-modern">
+
+        <div class="form-group-item" data-show-for="VEICULO">
+          <label for="id_odometro_km" class="form-label-custom">Leitura do odômetro (km)</label>
+          <input type="number" step="0.1" min="0" name="odometro_km" id="id_odometro_km" class="form-control-custom" placeholder="Ex: 45210.5" value="{{ form_values.odometro_km|default:'' }}">
+        </div>
+
+        <div class="form-group-item" data-show-for="MAQUINA">
+          <label for="id_horimetro_h" class="form-label-custom">Leitura do horímetro (h)</label>
+          <input type="number" step="0.1" min="0" name="horimetro_h" id="id_horimetro_h" class="form-control-custom" placeholder="Ex: 1380.5" value="{{ form_values.horimetro_h|default:'' }}">
+        </div>
         
         <!-- Número do Lote -->
-        <div class="form-group-item">
+        <div class="form-group-item" data-show-for="RASTREAVEL">
           <label for="id_lote" class="form-label-custom">Número / Código do Lote</label>
-          <input type="text" name="lote" id="id_lote" class="form-control-custom" placeholder="Ex: LT-2026-A1">
+          <input type="text" name="lote" id="id_lote" class="form-control-custom" placeholder="Ex: LT-2026-A1" value="{{ form_values.lote|default:'' }}">
           <div class="form-help-text">Permite rastreabilidade individual por lote do fabricante.</div>
         </div>
 
         <!-- Data de Validade -->
-        <div class="form-group-item">
+        <div class="form-group-item" data-show-for="ENTRADA_RASTREAVEL">
           <label for="id_validade" class="form-label-custom">Data de Validade (se lote novo)</label>
-          <input type="date" name="validade" id="id_validade" class="form-control-custom">
+          <input type="date" name="validade" id="id_validade" class="form-control-custom" value="{{ form_values.validade|default:'' }}">
           <div class="form-help-text">Alimenta o motor de prevenção de perdas por vencimento (RF03.2).</div>
         </div>
 
         <!-- Preço Unitário -->
-        <div class="form-group-item">
+        <div class="form-group-item" data-show-for="ENTRADA">
           <label for="id_preco" class="form-label-custom">Preço Unitário de Aquisição (R$)</label>
-          <input type="number" step="0.01" min="0" name="preco_unitario" id="id_preco" class="form-control-custom" placeholder="Ex: 125.50">
+          <input type="number" step="0.01" min="0" name="preco_unitario" id="id_preco" class="form-control-custom" placeholder="Ex: 125.50" value="{{ form_values.preco_unitario|default:'' }}">
           <div class="form-help-text">Se não houver valor disponível, deixe em branco (não será zero).</div>
+        </div>
+
+        <div class="form-group-item" data-show-for="ENTRADA">
+          <label for="id_valor_total_pago" class="form-label-custom">Valor Total Pago (R$)</label>
+          <input type="number" step="0.01" min="0" name="valor_total_pago" id="id_valor_total_pago" class="form-control-custom" placeholder="Ex: 1250.00" value="{{ form_values.valor_total_pago|default:'' }}">
+          <div class="form-help-text">Valor final da compra, incluindo descontos. Opcional para saídas.</div>
         </div>
 
         <!-- Destino da Aplicação -->
         <div class="form-group-item">
           <label for="id_destino" class="form-label-custom">Destino / Aplicação / Setor</label>
-          <input type="text" name="destino" id="id_destino" class="form-control-custom" placeholder="Ex: Pasto Sede 03 / Confinamento">
+          <input type="text" name="destino" id="id_destino" class="form-control-custom" placeholder="Ex: Pasto Sede 03 / Confinamento" value="{{ form_values.destino|default:'' }}">
           <div class="form-help-text">Setor, piquete ou finalidade de uso do insumo.</div>
         </div>
 
         <!-- Fornecedor -->
-        <div class="form-group-item">
+        <div class="form-group-item" data-show-for="ENTRADA">
           <label for="id_fornecedor" class="form-label-custom">Fornecedor / Origem</label>
-          <input type="text" name="fornecedor" id="id_fornecedor" class="form-control-custom" placeholder="Ex: Cooperativa Agropecuária de Ariquemes">
+          <input type="text" name="fornecedor" id="id_fornecedor" class="form-control-custom" placeholder="Ex: Cooperativa Agropecuária de Ariquemes" value="{{ form_values.fornecedor|default:'' }}">
           <div class="form-help-text">Nome da empresa ou distribuidora de origem.</div>
+        </div>
+
+        <div class="form-group-item" data-show-for="ENTRADA">
+          <label for="id_comprador" class="form-label-custom">Comprador</label>
+          <input type="text" name="comprador" id="id_comprador" class="form-control-custom" placeholder="Ex: Maria - setor de compras" value="{{ form_values.comprador|default:'' }}">
+          <div class="form-help-text">Pessoa que negociou ou realizou a compra.</div>
+        </div>
+
+        <div class="form-group-item" data-show-for="ENTRADA">
+          <label for="id_origem_recurso" class="form-label-custom">Origem do recurso</label>
+          <select name="origem_recurso" id="id_origem_recurso" class="form-control-custom">
+            {% for value, label in origens_recurso %}
+              <option value="{{ value }}" {% if form_values.origem_recurso == value or not form_values and value == 'COMPRA_EXTERNA' %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          <div class="form-help-text">Identifique compra, produção da fazenda ou transferência interna.</div>
+        </div>
+
+        <div class="form-group-item" data-show-for="OPERACIONAL">
+          <label for="id_ativo" class="form-label-custom">Ativo que utilizou este insumo</label>
+          <select name="ativo" id="id_ativo" class="form-control-custom">
+            <option value="">Sem vínculo com ativo</option>
+            {% for ativo in ativos %}
+              <option value="{{ ativo.id }}" {% if form_values.ativo == ativo.id|stringformat:'s' %}selected{% endif %}>{{ ativo.nome }}{% if ativo.tipo_item %} · {{ ativo.tipo_item }}{% endif %}</option>
+            {% endfor %}
+          </select>
+          <div class="form-help-text">Vincule combustível, óleo, pneus ou peças ao veículo/equipamento utilizado.</div>
         </div>
 
         <!-- Responsável -->
         <div class="form-group-item">
           <label for="id_responsavel" class="form-label-custom">Responsável pelo Lançamento</label>
-          <input type="text" name="responsavel" id="id_responsavel" class="form-control-custom" placeholder="Ex: Carlos Vaqueiro / João Capataz">
+          <input type="text" name="responsavel" id="id_responsavel" class="form-control-custom" placeholder="Ex: Carlos Vaqueiro / João Capataz" value="{{ form_values.responsavel|default:'' }}">
           <div class="form-help-text">Colaborador que realizou a operação no campo.</div>
         </div>
 
@@ -170,22 +262,97 @@
 </div>
 
 <script>
-  function atualizarDicaSaldo(select) {
-    const selectedOption = select.options[select.selectedIndex];
-    const helpDiv = document.getElementById('help-saldo-info');
-    if (selectedOption && selectedOption.dataset.saldo) {
-      helpDiv.innerHTML = '💡 Saldo atual no galpão: <strong>' + selectedOption.dataset.saldo + ' ' + selectedOption.dataset.unidade + '</strong>';
-      helpDiv.style.color = '#1b4332';
+  const seletorProduto = document.getElementById('id_produto');
+  const seletorFluxo = document.getElementById('id_tipo');
+  const quantidade = document.getElementById('id_quantidade');
+  const categoriasRastreaveis = ['DEFENSIVOS', 'FERTILIZANTES', 'SEMENTES', 'MEDICAMENTOS', 'SUPLEMENTOS'];
+
+  function atualizarFormularioMovimentacao() {
+    const produto = seletorProduto.options[seletorProduto.selectedIndex];
+    const fluxo = seletorFluxo.value;
+    const categoria = produto ? produto.dataset.categoria : '';
+    const ehAtivo = ['MAQUINAS', 'VEICULOS'].includes(categoria);
+    const ehFerramenta = categoria === 'FERRAMENTAS';
+    const ehItemUnitario = ehAtivo || ehFerramenta;
+    const ehInsumoOperacional = ['INSUMOS', 'COMBUSTIVEIS', 'MANUTENCAO', 'MATERIAIS_CONSTRUCAO', 'OUTROS'].includes(categoria);
+    const ehEntrada = fluxo === 'ENTRADA';
+    const ehRastreavel = categoriasRastreaveis.includes(categoria);
+
+    document.querySelectorAll('[data-show-for]').forEach((elemento) => {
+      const regra = elemento.dataset.showFor;
+      const mostrar = regra === 'INSUMO' ? Boolean(categoria) && !ehItemUnitario
+        : regra === 'ATIVO' ? ehAtivo
+        : regra === 'FERRAMENTA' ? ehFerramenta
+        : regra === 'OPERACIONAL' ? ehInsumoOperacional
+        : regra === 'VEICULO' ? categoria === 'VEICULOS'
+        : regra === 'MAQUINA' ? categoria === 'MAQUINAS'
+        : regra === 'RASTREAVEL' ? ehRastreavel
+        : regra === 'ENTRADA' ? ehEntrada
+        : regra === 'SAIDA' ? !ehEntrada
+        : regra === 'ENTRADA_RASTREAVEL' ? ehEntrada && ehRastreavel
+        : true;
+      elemento.hidden = !mostrar;
+    });
+
+    const contexto = document.getElementById('contexto-produto');
+    const categoriaContexto = document.getElementById('contexto-categoria');
+    const especificacoes = document.getElementById('contexto-especificacoes');
+    const saldoInfo = document.getElementById('help-saldo-info');
+    if (!produto || !produto.value) {
+      contexto.hidden = true;
+      saldoInfo.textContent = 'Selecione o produto que terá sua quantidade movimentada.';
+      quantidade.step = '0.01';
+      quantidade.min = '0.01';
+      quantidade.placeholder = 'Ex: 50.00';
+      document.getElementById('ajuda-quantidade').textContent = 'Informe a quantidade na unidade cadastrada para o produto.';
+      document.getElementById('ajuda-fluxo').textContent = 'Entrada adiciona ao saldo; saída reduz o saldo disponível.';
+      document.querySelector('label[for="id_destino"]').textContent = 'Destino / setor';
+      document.querySelector('label[for="id_responsavel"]').textContent = 'Responsável pela movimentação';
+      document.getElementById('btn-salvar-mov').lastChild.textContent = ' Registrar movimentação';
+      return;
     }
+
+    const dados = produto.dataset;
+    categoriaContexto.textContent = dados.categoriaLabel;
+    const detalhes = [];
+    if (dados.tipoItem) detalhes.push(dados.tipoItem);
+    if (!ehItemUnitario) {
+      detalhes.push(dados.embalagem, `Caixa: ${dados.caixa}`);
+      if (dados.peso) detalhes.push(`Peso/embalagem: ${dados.peso} kg`);
+      if (dados.volume) detalhes.push(`Volume/embalagem: ${dados.volume} ml`);
+    }
+    if (dados.fabricante) detalhes.push(`Fabricante: ${dados.fabricante}`);
+    if (dados.modelo) detalhes.push(`Modelo: ${dados.modelo}`);
+    if (dados.serie) detalhes.push(`Série/patrimônio: ${dados.serie}`);
+    if (dados.placa) detalhes.push(`Placa: ${dados.placa}`);
+    if (dados.chassi) detalhes.push(`Chassi: ${dados.chassi}`);
+    if (dados.anoFabricacao) detalhes.push(`Ano: ${dados.anoFabricacao}`);
+    especificacoes.textContent = detalhes.join(' · ');
+    contexto.hidden = false;
+    saldoInfo.textContent = `Saldo atual: ${dados.saldo} ${dados.unidade}`;
+    document.getElementById('ajuda-fluxo').textContent = ehAtivo
+      ? ehEntrada ? 'Entrada registra aquisição ou retorno do ativo e adiciona uma unidade ao patrimônio.' : 'Saída registra transferência ou baixa do ativo e reduz o patrimônio disponível.'
+      : ehEntrada ? 'Entrada adiciona quantidade ao saldo do produto.' : 'Saída reduz o saldo do produto e não pode ultrapassar o estoque disponível.';
+
+    quantidade.step = ehItemUnitario ? '1' : '0.01';
+    quantidade.min = ehItemUnitario ? '1' : '0.01';
+    quantidade.placeholder = ehItemUnitario ? 'Ex: 1' : `Ex: 50 ${dados.unidade}`;
+    document.getElementById('ajuda-quantidade').textContent = ehItemUnitario
+      ? 'Informe quantas unidades entram ou saem.'
+      : `Informe a quantidade em ${dados.unidade}; uma embalagem pode conter ${dados.peso ? `${dados.peso} kg` : dados.volume ? `${dados.volume} ml` : 'o conteúdo cadastrado'}.`;
+
+    const labelDestino = document.querySelector('label[for="id_destino"]');
+    labelDestino.textContent = ehEntrada ? 'Local de armazenagem / recebimento' : ehAtivo ? 'Destino / setor do ativo' : ehFerramenta ? 'Local / setor da ferramenta' : 'Destino / aplicação / lote de animais';
+    const labelResponsavel = document.querySelector('label[for="id_responsavel"]');
+    labelResponsavel.textContent = ehEntrada ? 'Responsável pelo recebimento' : ehAtivo ? 'Responsável pela movimentação do ativo' : ehFerramenta ? 'Responsável pela ferramenta' : 'Aplicador / responsável pela saída';
+
+    document.getElementById('btn-salvar-mov').lastChild.textContent = ehEntrada
+      ? ' Gravar Entrada'
+      : ' Gravar Saída';
   }
 
-  function ajustarTipoFluxo(select) {
-    const btn = document.getElementById('btn-salvar-mov');
-    if (select.value === 'SAIDA') {
-      btn.innerHTML = '<span>⬆️</span> Gravar Saída de Estoque';
-    } else {
-      btn.innerHTML = '<span>⬇️</span> Gravar Entrada de Reposição';
-    }
-  }
+  seletorProduto.addEventListener('change', atualizarFormularioMovimentacao);
+  seletorFluxo.addEventListener('change', atualizarFormularioMovimentacao);
+  atualizarFormularioMovimentacao();
 </script>
 {% endblock %}

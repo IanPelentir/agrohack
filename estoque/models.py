@@ -50,26 +50,46 @@ class Produto(models.Model):
     """
 
     CATEGORIAS = [
+        ('INSUMOS',       'Insumos Gerais'),
         ('DEFENSIVOS',    'Defensivos Agrícolas'),
         ('FERTILIZANTES', 'Fertilizantes e Corretivos'),
         ('SEMENTES',      'Sementes e Mudas'),
         ('MEDICAMENTOS',  'Medicamentos Veterinários'),
-        ('COMBUSTIVEIS',  'Combustíveis e Lubrificantes'),
+        ('COMBUSTIVEIS',  'Combustíveis, Óleos e Lubrificantes'),
         ('SUPLEMENTOS',   'Suplementos Minerais e Rações'),
+        ('PECUARIA',      'Materiais de Pecuária'),
+        ('MAQUINAS',      'Máquinas e Implementos Agrícolas'),
+        ('VEICULOS',      'Veículos e Automóveis Rurais'),
+        ('FERRAMENTAS',   'Ferramentas e Utensílios'),
         ('MANUTENCAO',    'Peças e Manutenção'),
+        ('MATERIAIS_CONSTRUCAO', 'Materiais de Construção e Cerca'),
         ('EPI',           'Equipamentos e EPIs'),
+        ('OUTROS',        'Outros Itens da Fazenda'),
+    ]
+
+    TIPOS_EMBALAGEM = [
+        ('UNIDADE', 'Unidade'),
+        ('SACO', 'Saco'),
+        ('FRASCO', 'Frasco'),
+        ('CAIXA', 'Caixa'),
+        ('GRANEL', 'Granel'),
+        ('TAMBOR', 'Tambor'),
     ]
 
     # Campo 1 — produto
     nome = models.CharField(
-        max_length=150, unique=True, verbose_name="Nome do Insumo",
-        help_text="Nome comercial / identificação do insumo (campo 1 do regulamento)."
+        max_length=150, unique=True, verbose_name="Nome do Item",
+        help_text="Nome comercial ou identificação do item da propriedade."
     )
     # Campo 2 — categoria
     categoria = models.CharField(
         max_length=50, choices=CATEGORIAS, default='DEFENSIVOS',
         verbose_name="Categoria",
         help_text="Categoria operacional do insumo (campo 2 do regulamento)."
+    )
+    tipo_item = models.CharField(
+        max_length=100, blank=True, verbose_name="Tipo específico",
+        help_text="Descrição livre, como caminhonete, trator, óleo 15W40 ou chave de roda."
     )
     # Campo 3 — unidade (canônica por produto — RN01)
     unidade = models.CharField(
@@ -78,6 +98,29 @@ class Produto(models.Model):
             "Unidade canônica do produto (kg, L, sc, frasco, dose, un). "
             "Não misturar com outras unidades no mesmo produto (RN01)."
         )
+    )
+    tipo_embalagem = models.CharField(
+        max_length=20, choices=TIPOS_EMBALAGEM, default='UNIDADE',
+        verbose_name="Tipo de Embalagem"
+    )
+    embalagem_em_caixa = models.BooleanField(
+        default=False, verbose_name="Armazenado em caixa"
+    )
+    peso_embalagem_kg = models.DecimalField(
+        max_digits=10, decimal_places=3, null=True, blank=True,
+        verbose_name="Peso por embalagem (kg)"
+    )
+    volume_embalagem_ml = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        verbose_name="Volume por embalagem (ml)"
+    )
+    fabricante = models.CharField(max_length=120, blank=True, verbose_name="Fabricante")
+    modelo = models.CharField(max_length=120, blank=True, verbose_name="Modelo")
+    numero_serie = models.CharField(max_length=100, blank=True, verbose_name="Número de série / patrimônio")
+    placa = models.CharField(max_length=10, blank=True, verbose_name="Placa")
+    chassi = models.CharField(max_length=30, blank=True, verbose_name="Chassi")
+    ano_fabricacao = models.PositiveSmallIntegerField(
+        null=True, blank=True, verbose_name="Ano de fabricação"
     )
     # Campo 5 — estoque_minimo
     estoque_minimo = models.DecimalField(
@@ -109,7 +152,8 @@ class Produto(models.Model):
         ordering = ['nome']
 
     def __str__(self) -> str:
-        return f"{self.nome} ({self.unidade})"
+        subtipo = f" · {self.tipo_item}" if self.tipo_item else ''
+        return f"{self.nome}{subtipo} ({self.unidade})"
 
     @property
     def saldo_atual(self) -> Decimal:
@@ -144,6 +188,90 @@ class Produto(models.Model):
         if saldo > Decimal('0.00'):
             return saldo * self.preco_referencia
         return Decimal('0.00')
+
+
+class AtivoRural(models.Model):
+    STATUS_MANUTENCAO = [
+        ('OPERACIONAL', 'Operacional'),
+        ('REVISAO', 'Revisão programada'),
+        ('MANUTENCAO', 'Em manutenção'),
+        ('INATIVO', 'Inativo'),
+    ]
+    UNIDADES_CONSUMO = [
+        ('KM_L', 'km/L'),
+        ('L_100KM', 'L/100 km'),
+        ('L_H', 'L/h'),
+    ]
+
+    produto = models.OneToOneField(
+        Produto, on_delete=models.CASCADE, related_name='cadastro_ativo',
+        verbose_name='Veículo ou maquinário'
+    )
+    status_manutencao = models.CharField(
+        max_length=20, choices=STATUS_MANUTENCAO, default='OPERACIONAL',
+        verbose_name='Status de manutenção'
+    )
+    consumo_medio = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(Decimal('0.01'))],
+        verbose_name='Consumo médio'
+    )
+    unidade_consumo = models.CharField(
+        max_length=10, choices=UNIDADES_CONSUMO, blank=True,
+        verbose_name='Unidade de consumo'
+    )
+    observacoes = models.TextField(blank=True, verbose_name='Observações de operação')
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Ativo Rural'
+        verbose_name_plural = 'Ativos Rurais'
+        ordering = ['produto__nome']
+
+    def __str__(self) -> str:
+        return f'{self.produto.tipo_item or self.produto.nome} — {self.produto.nome}'
+
+    @property
+    def ultima_movimentacao(self):
+        return self.produto.movimentacoes.order_by('-data_movimentacao', '-id').first()
+
+
+class ManutencaoAtivo(models.Model):
+    TIPOS = [
+        ('PREVENTIVA', 'Preventiva'),
+        ('CORRETIVA', 'Corretiva'),
+        ('REVISAO', 'Revisão'),
+        ('PNEUS', 'Pneus e rodagem'),
+        ('OUTRA', 'Outra'),
+    ]
+
+    ativo = models.ForeignKey(
+        AtivoRural, on_delete=models.CASCADE, related_name='manutencoes',
+        verbose_name='Ativo'
+    )
+    tipo = models.CharField(max_length=20, choices=TIPOS, default='PREVENTIVA')
+    data = models.DateField(default=timezone.now, verbose_name='Data')
+    descricao = models.CharField(max_length=180, verbose_name='Serviço realizado')
+    odometro_km = models.DecimalField(
+        max_digits=12, decimal_places=1, null=True, blank=True,
+        validators=[MinValueValidator(Decimal('0.0'))], verbose_name='Odômetro (km)'
+    )
+    horimetro_h = models.DecimalField(
+        max_digits=12, decimal_places=1, null=True, blank=True,
+        validators=[MinValueValidator(Decimal('0.0'))], verbose_name='Horímetro (h)'
+    )
+    custo = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(Decimal('0.00'))], verbose_name='Custo (R$)'
+    )
+    fornecedor = models.CharField(max_length=150, blank=True, verbose_name='Oficina / fornecedor')
+    responsavel = models.CharField(max_length=100, blank=True, verbose_name='Responsável')
+    observacoes = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = 'Manutenção de Ativo'
+        verbose_name_plural = 'Manutenções de Ativos'
+        ordering = ['-data', '-id']
 
 
 # ---------------------------------------------------------------------------
@@ -256,6 +384,29 @@ class Movimentacao(models.Model):
         default=timezone.now, verbose_name="Data da Movimentação",
         help_text="Data efetiva da operação (campo 7)."
     )
+    odometro_km = models.DecimalField(
+        max_digits=12, decimal_places=1, null=True, blank=True,
+        validators=[MinValueValidator(Decimal('0.0'))],
+        verbose_name="Leitura do odômetro (km)"
+    )
+    horimetro_h = models.DecimalField(
+        max_digits=12, decimal_places=1, null=True, blank=True,
+        validators=[MinValueValidator(Decimal('0.0'))],
+        verbose_name="Leitura do horímetro (h)"
+    )
+    ativo = models.ForeignKey(
+        AtivoRural, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='movimentacoes_insumos', verbose_name='Ativo relacionado'
+    )
+    ORIGENS_RECURSO = [
+        ('COMPRA_EXTERNA', 'Compra externa'),
+        ('PRODUCAO_PROPRIA', 'Produção própria'),
+        ('TRANSFERENCIA_INTERNA', 'Transferência interna'),
+    ]
+    origem_recurso = models.CharField(
+        max_length=24, choices=ORIGENS_RECURSO, default='COMPRA_EXTERNA',
+        verbose_name='Origem do recurso'
+    )
     # Campo 8 — preco_aquisicao (None preservado — RN02)
     preco_unitario = models.DecimalField(
         max_digits=12, decimal_places=2,
@@ -270,6 +421,15 @@ class Movimentacao(models.Model):
     fornecedor = models.CharField(
         max_length=150, blank=True, verbose_name="Fornecedor",
         help_text="Razão social ou nome fantasia do fornecedor (campo 11)."
+    )
+    comprador = models.CharField(
+        max_length=100, blank=True, verbose_name="Comprador",
+        help_text="Pessoa que realizou a compra ou contratação."
+    )
+    valor_total_pago = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True,
+        verbose_name="Valor total pago (R$)",
+        help_text="Valor total da compra. Deixe em branco se não informado."
     )
     # Campo 12 — destino
     destino = models.CharField(
@@ -314,6 +474,88 @@ class Movimentacao(models.Model):
             f"{self.get_tipo_display()} de {self.quantidade} {self.produto.unidade} "
             f"em {self.data_movimentacao.strftime('%d/%m/%Y')}"
         )
+
+
+class TransferenciaRecurso(models.Model):
+    ORIGENS = [
+        ('COMPRA_EXTERNA', 'Adquirido externamente'),
+        ('PRODUCAO_PROPRIA', 'Produzido na fazenda'),
+        ('MISTO', 'Estoque de origem mista'),
+    ]
+    DESTINOS = [
+        ('USO_INTERNO', 'Uso interno'),
+        ('PRODUCAO_PROPRIA', 'Produção própria / transformação'),
+    ]
+
+    produto_origem = models.ForeignKey(
+        Produto, on_delete=models.PROTECT, related_name='transferencias_origem',
+        verbose_name='Recurso de origem'
+    )
+    produto_destino = models.ForeignKey(
+        Produto, on_delete=models.PROTECT, related_name='transferencias_destino',
+        verbose_name='Recurso de destino'
+    )
+    quantidade_origem = models.DecimalField(max_digits=12, decimal_places=2)
+    quantidade_destino = models.DecimalField(max_digits=12, decimal_places=2)
+    origem_recurso = models.CharField(max_length=24, choices=ORIGENS, verbose_name='Origem')
+    destino_tipo = models.CharField(max_length=24, choices=DESTINOS, verbose_name='Destino')
+    data = models.DateField(default=timezone.now)
+    local_destino = models.CharField(max_length=150, blank=True, verbose_name='Setor / destino')
+    responsavel = models.CharField(max_length=100, blank=True)
+    observacoes = models.TextField(blank=True)
+    movimentacao_saida = models.OneToOneField(
+        Movimentacao, on_delete=models.PROTECT, related_name='transferencia_saida'
+    )
+    movimentacao_entrada = models.OneToOneField(
+        Movimentacao, on_delete=models.PROTECT, related_name='transferencia_entrada'
+    )
+
+    class Meta:
+        verbose_name = 'Transferência de Recurso'
+        verbose_name_plural = 'Transferências de Recursos'
+        ordering = ['-data', '-id']
+
+    def clean(self) -> None:
+        super().clean()
+        if self.produto_origem_id and self.produto_destino_id and self.produto_origem_id == self.produto_destino_id:
+            raise ValidationError('A origem e o destino devem ser produtos diferentes.')
+
+
+class PendenciaPrioritaria(models.Model):
+    PRIORIDADES = [
+        ('ALTA', 'Alta'),
+        ('MEDIA', 'Média'),
+        ('BAIXA', 'Baixa'),
+    ]
+
+    titulo = models.CharField(max_length=180, verbose_name='Pendência')
+    descricao = models.TextField(blank=True, verbose_name='Descrição / ação necessária')
+    prioridade = models.CharField(max_length=5, choices=PRIORIDADES, default='MEDIA')
+    produto = models.ForeignKey(
+        Produto, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='pendencias', verbose_name='Insumo / recurso relacionado'
+    )
+    ativo = models.ForeignKey(
+        AtivoRural, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='pendencias', verbose_name='Veículo / ativo relacionado'
+    )
+    prazo = models.DateField(null=True, blank=True, verbose_name='Prazo')
+    concluida = models.BooleanField(default=False, verbose_name='Concluída')
+    criada_em = models.DateTimeField(auto_now_add=True)
+    concluida_em = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Pendência Prioritária'
+        verbose_name_plural = 'Pendências Prioritárias'
+        ordering = ['concluida', 'prazo', '-criada_em']
+
+    def clean(self) -> None:
+        super().clean()
+        if self.ativo_id and self.produto_id and self.ativo.produto_id != self.produto_id:
+            raise ValidationError('O produto relacionado deve corresponder ao ativo selecionado.')
+
+    def __str__(self) -> str:
+        return self.titulo
 
 
 # ---------------------------------------------------------------------------

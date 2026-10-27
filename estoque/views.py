@@ -30,6 +30,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -41,7 +42,23 @@ from .analises import (
     estimar_duracao,
     gerar_alertas_priorizados,
 )
-from .models import Lote, LoteAnimais, Movimentacao, Produto
+from .forms import (
+    AtivoRuralForm,
+    ManutencaoAtivoForm,
+    PendenciaPrioritariaForm,
+    ProdutoForm,
+    TransferenciaRecursoForm,
+)
+from .models import (
+    AtivoRural,
+    Lote,
+    LoteAnimais,
+    ManutencaoAtivo,
+    Movimentacao,
+    PendenciaPrioritaria,
+    Produto,
+    TransferenciaRecurso,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -104,7 +121,29 @@ def _normalizar_data(texto: str) -> str | None:
 # RF02 — Dashboard To-Do List com KPIs e Simulação Sazonal
 # ---------------------------------------------------------------------------
 
-def painel(request):
+def _alertas_ativos() -> list[dict]:
+    alertas = []
+    for ativo in AtivoRural.objects.select_related('produto').filter(
+        status_manutencao__in=('REVISAO', 'MANUTENCAO', 'INATIVO')
+    ):
+        prioridade = 'ALTA' if ativo.status_manutencao in ('MANUTENCAO', 'INATIVO') else 'MEDIA'
+        alertas.append({
+            'tipo': 'MANUTENCAO_ATIVO',
+            'tipo_display': f"Ativo: {ativo.get_status_manutencao_display()}",
+            'prioridade': prioridade,
+            'produto_id': ativo.produto_id,
+            'produto_nome': ativo.produto.nome,
+            'ativo_id': ativo.id,
+            'justificativa': (
+                f"{ativo.produto.tipo_item or ativo.produto.nome} está com status "
+                f"'{ativo.get_status_manutencao_display()}'. Confira a manutenção e atualize "
+                "o status após a intervenção."
+            ),
+        })
+    return alertas
+
+
+def painel(request, pendencia_form=None):
     """
     RF02.1, RF02.2, RF02.3 — Dashboard principal do AGROGADO.
 
@@ -196,6 +235,22 @@ def painel(request):
         modo_seca=modo_seca,
         total_cabecas_propriedade=total_cabecas,
     )
+    alertas.extend(_alertas_ativos())
+    peso_prioridade = {'ALTA': 1, 'MEDIA': 2, 'BAIXA': 3}
+    alertas.sort(key=lambda alerta: peso_prioridade.get(alerta.get('prioridade', 'BAIXA'), 99))
+    pendencias_abertas = list(
+        PendenciaPrioritaria.objects.filter(concluida=False).select_related('produto', 'ativo__produto')
+    )
+    for alerta in alertas:
+        pendencia = next((
+            item for item in pendencias_abertas
+            if (
+                alerta.get('produto_id') and item.produto_id == alerta.get('produto_id')
+            ) or (
+                alerta.get('ativo_id') and item.ativo_id == alerta.get('ativo_id')
+            )
+        ), None)
+        alerta['pendencia_aberta_id'] = pendencia.id if pendencia else None
 
     # Contadores semafóricos para KPIs
     alta_prioridade = sum(1 for a in alertas if a.get('prioridade') == 'ALTA')
@@ -282,6 +337,11 @@ def painel(request):
 
     context = {
         'alertas': alertas,
+        'pendencia_form': pendencia_form or PendenciaPrioritariaForm(),
+        'pendencias_abertas': pendencias_abertas,
+        'pendencias_concluidas': PendenciaPrioritaria.objects.filter(concluida=True).select_related(
+            'produto', 'ativo__produto'
+        )[:10],
         'lotes_animais': lotes_formatados,
         'produtos_insumos': produtos_insumos,
         'modo_seca': modo_seca,
@@ -318,7 +378,7 @@ def produto_lista(request):
 
     qs = Produto.objects.filter(ativo=True)
     if busca:
-        qs = qs.filter(nome__icontains=busca)
+        qs = qs.filter(Q(nome__icontains=busca) | Q(tipo_item__icontains=busca))
     if categoria:
         qs = qs.filter(categoria=categoria)
 
@@ -346,8 +406,19 @@ def produto_lista(request):
         produtos_formatados.append({
             'id': p.id,
             'nome': p.nome,
+            'tipo_item': p.tipo_item,
             'categoria': p.get_categoria_display(),
             'unidade': p.unidade,
+            'tipo_embalagem': p.get_tipo_embalagem_display(),
+            'embalagem_em_caixa': p.embalagem_em_caixa,
+            'peso_embalagem_kg': p.peso_embalagem_kg,
+            'volume_embalagem_ml': p.volume_embalagem_ml,
+            'fabricante': p.fabricante,
+            'modelo': p.modelo,
+            'numero_serie': p.numero_serie,
+            'placa': p.placa,
+            'chassi': p.chassi,
+            'ano_fabricacao': p.ano_fabricacao,
             'saldo': saldo,
             'estoque_minimo': minimo,
             'status_estoque': status_estoque,
@@ -364,6 +435,18 @@ def produto_lista(request):
         'status_selecionado': status,
     }
     return render(request, 'estoque/produto_lista.html', context)
+
+
+def produto_novo(request):
+    """Cadastra um insumo, medicamento, implemento ou máquina da propriedade."""
+    form = ProdutoForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        produto = form.save()
+        if produto.categoria in ('MAQUINAS', 'VEICULOS'):
+            AtivoRural.objects.get_or_create(produto=produto)
+        messages.success(request, f"Produto '{produto.nome}' cadastrado no catálogo da fazenda.")
+        return redirect('estoque:produto_lista')
+    return render(request, 'estoque/produto_form.html', {'form': form})
 
 
 # ---------------------------------------------------------------------------
@@ -424,7 +507,18 @@ def produto_detalhe(request, pk):
             'id': p.id,
             'nome': p.nome,
             'categoria': p.get_categoria_display(),
+            'tipo_item': p.tipo_item,
             'unidade': p.unidade,
+            'tipo_embalagem': p.get_tipo_embalagem_display(),
+            'embalagem_em_caixa': p.embalagem_em_caixa,
+            'peso_embalagem_kg': p.peso_embalagem_kg,
+            'volume_embalagem_ml': p.volume_embalagem_ml,
+            'fabricante': p.fabricante,
+            'modelo': p.modelo,
+            'numero_serie': p.numero_serie,
+            'placa': p.placa,
+            'chassi': p.chassi,
+            'ano_fabricacao': p.ano_fabricacao,
             'saldo': saldo,
             'estoque_minimo': minimo,
             'status_estoque': status_estoque,
@@ -448,6 +542,10 @@ def produto_detalhe(request, pk):
                 'responsavel': m.responsavel,
                 'preco_unitario': m.preco_unitario,
                 'fornecedor': m.fornecedor,
+                'comprador': m.comprador,
+                'valor_total_pago': m.valor_total_pago,
+                'odometro_km': m.odometro_km,
+                'horimetro_h': m.horimetro_h,
             }
             for m in movs
         ],
@@ -772,27 +870,75 @@ def movimentacao_nova(request):
     RF01.3 — Registro manual de movimentação com validação RN01.1 (saldo negativo).
     Após gravação, redireciona para o painel disparando reanálise automática.
     """
-    produtos = Produto.objects.filter(ativo=True)
+    produtos = list(Produto.objects.filter(ativo=True))
+    ativos = list(AtivoRural.objects.select_related('produto').filter(produto__ativo=True))
+    ativos_contexto = [
+        {'id': ativo.id, 'nome': ativo.produto.nome, 'tipo_item': ativo.produto.tipo_item}
+        for ativo in ativos
+    ]
+    produtos_contexto = [
+        {
+            'id': p.id,
+            'nome': p.nome,
+            'unidade': p.unidade,
+            'saldo': p.saldo_atual,
+            'tipo_item': p.tipo_item,
+            'categoria': p.categoria,
+            'categoria_display': p.get_categoria_display(),
+            'tipo_embalagem': p.get_tipo_embalagem_display(),
+            'embalagem_em_caixa': p.embalagem_em_caixa,
+            'peso_embalagem_kg': p.peso_embalagem_kg,
+            'volume_embalagem_ml': p.volume_embalagem_ml,
+            'fabricante': p.fabricante,
+            'modelo': p.modelo,
+            'numero_serie': p.numero_serie,
+            'placa': p.placa,
+            'chassi': p.chassi,
+            'ano_fabricacao': p.ano_fabricacao,
+        }
+        for p in produtos
+    ]
 
     if request.method == 'POST':
         produto_id    = request.POST.get('produto')
         tipo          = request.POST.get('tipo')
         quantidade_str = request.POST.get('quantidade', '').strip()
-        data_str      = request.POST.get('data', '').strip()
+        data_str      = request.POST.get('data_movimentacao', request.POST.get('data', '')).strip()
         lote_num      = request.POST.get('lote', '').strip()
         validade_str  = request.POST.get('validade', '').strip()
         preco_str     = request.POST.get('preco_unitario', '').strip()
         destino       = request.POST.get('destino', '').strip()
         responsavel   = request.POST.get('responsavel', '').strip()
         fornecedor    = request.POST.get('fornecedor', '').strip()
+        comprador     = request.POST.get('comprador', '').strip()
+        valor_total_str = request.POST.get('valor_total_pago', '').strip()
+        odometro_str  = request.POST.get('odometro_km', '').strip()
+        horimetro_str = request.POST.get('horimetro_h', '').strip()
+        ativo_id      = request.POST.get('ativo', '').strip()
+        origem_recurso = request.POST.get('origem_recurso', 'COMPRA_EXTERNA')
 
         produto = get_object_or_404(Produto, id=produto_id)
+        eh_ativo = produto.categoria in ('MAQUINAS', 'VEICULOS', 'FERRAMENTAS')
+        ativo_relacionado = get_object_or_404(AtivoRural, pk=ativo_id) if ativo_id else None
 
         ctx_erro = {
-            'produtos': [{'id': p.id, 'nome': p.nome, 'unidade': p.unidade, 'saldo': p.saldo_atual} for p in produtos],
+            'produtos': produtos_contexto,
             'produto_selecionado_id': produto_id,
+            'tipo_selecionado': tipo,
             'data_padrao': data_str or date.today().isoformat(),
+            'form_values': request.POST,
+            'ativos': ativos_contexto,
+            'origens_recurso': Movimentacao.ORIGENS_RECURSO,
         }
+
+        if tipo not in ('ENTRADA', 'SAIDA'):
+            messages.error(request, "Selecione se a operação é uma entrada ou uma saída.")
+            return render(request, 'estoque/movimentacao_form.html', ctx_erro)
+
+        origens_validas = {choice[0] for choice in Movimentacao.ORIGENS_RECURSO}
+        if origem_recurso not in origens_validas:
+            messages.error(request, "Selecione uma origem válida para o recurso.")
+            return render(request, 'estoque/movimentacao_form.html', ctx_erro)
 
         try:
             quantidade = Decimal(quantidade_str.replace(',', '.'))
@@ -800,6 +946,23 @@ def movimentacao_nova(request):
                 raise ValueError
         except (InvalidOperation, ValueError):
             messages.error(request, "Quantidade inválida. Informe um valor numérico positivo.")
+            return render(request, 'estoque/movimentacao_form.html', ctx_erro)
+
+        if eh_ativo and quantidade != quantidade.to_integral_value():
+            messages.error(request, "Máquinas, veículos e ferramentas são controlados por unidade inteira.")
+            return render(request, 'estoque/movimentacao_form.html', ctx_erro)
+
+        if produto.categoria != 'VEICULOS':
+            odometro_str = ''
+        if produto.categoria != 'MAQUINAS':
+            horimetro_str = ''
+        try:
+            odometro = Decimal(odometro_str.replace(',', '.')) if odometro_str else None
+            horimetro = Decimal(horimetro_str.replace(',', '.')) if horimetro_str else None
+            if (odometro is not None and odometro < 0) or (horimetro is not None and horimetro < 0):
+                raise InvalidOperation
+        except InvalidOperation:
+            messages.error(request, "Informe uma leitura válida e não negativa para o medidor do ativo.")
             return render(request, 'estoque/movimentacao_form.html', ctx_erro)
 
         # RN01.1 — Bloqueio de saldo negativo
@@ -814,8 +977,31 @@ def movimentacao_nova(request):
                 )
                 return render(request, 'estoque/movimentacao_form.html', ctx_erro)
 
+        if eh_ativo:
+            lote_num = ''
+            validade_str = ''
+        elif tipo == 'SAIDA':
+            validade_str = ''
+        if tipo == 'SAIDA':
+            preco_str = ''
+            valor_total_str = ''
+            fornecedor = ''
+            comprador = ''
+            origem_recurso = 'TRANSFERENCIA_INTERNA'
+
         lote = None
-        if lote_num:
+        if lote_num and tipo == 'SAIDA':
+            lote = produto.lotes.filter(numero_lote=lote_num).first()
+            if lote is None:
+                messages.error(request, "O lote informado não está cadastrado para este produto e não pode ser usado em uma saída.")
+                return render(request, 'estoque/movimentacao_form.html', ctx_erro)
+            if quantidade > lote.saldo_lote:
+                messages.error(
+                    request,
+                    f"Saída não permitida: o lote {lote_num} possui saldo de {lote.saldo_lote} {produto.unidade}.",
+                )
+                return render(request, 'estoque/movimentacao_form.html', ctx_erro)
+        elif lote_num:
             data_val = date.fromisoformat(validade_str) if validade_str else None
             lote, _ = Lote.objects.get_or_create(
                 produto=produto,
@@ -827,6 +1013,7 @@ def movimentacao_nova(request):
                 lote.save()
 
         preco = Decimal(preco_str.replace(',', '.')) if preco_str else None
+        valor_total = Decimal(valor_total_str.replace(',', '.')) if valor_total_str else None
 
         Movimentacao.objects.create(
             produto=produto,
@@ -838,6 +1025,12 @@ def movimentacao_nova(request):
             destino=destino,
             responsavel=responsavel,
             fornecedor=fornecedor,
+            comprador=comprador,
+            valor_total_pago=valor_total,
+            odometro_km=odometro,
+            horimetro_h=horimetro,
+            ativo=ativo_relacionado,
+            origem_recurso=origem_recurso,
         )
 
         messages.success(
@@ -848,18 +1041,212 @@ def movimentacao_nova(request):
         return redirect('estoque:painel')
 
     context = {
-        'produtos': [
-            {'id': p.id, 'nome': p.nome, 'unidade': p.unidade, 'saldo': p.saldo_atual}
-            for p in produtos
-        ],
+        'produtos': produtos_contexto,
         'produto_selecionado_id': (
             int(request.GET.get('produto_id', 0))
             if request.GET.get('produto_id')
             else ''
         ),
+        'tipo_selecionado': request.GET.get('tipo', 'SAIDA'),
         'data_padrao': date.today().isoformat(),
+        'form_values': {},
+        'ativos': ativos_contexto,
+        'origens_recurso': Movimentacao.ORIGENS_RECURSO,
     }
     return render(request, 'estoque/movimentacao_form.html', context)
+
+
+def pendencia_nova(request):
+    initial = {
+        key: request.GET[key]
+        for key in ('titulo', 'descricao', 'prioridade', 'produto', 'ativo')
+        if request.GET.get(key)
+    }
+    form = PendenciaPrioritariaForm(request.POST or None, initial=initial)
+    if request.method == 'POST' and form.is_valid():
+        pendencia = form.save()
+        messages.success(request, f"Pendência '{pendencia.titulo}' adicionada ao painel.")
+        return redirect('/#secao-todo')
+    if request.method == 'POST':
+        messages.error(request, 'Revise os dados da nova pendência.')
+    return painel(request, pendencia_form=form)
+
+
+def pendencia_status(request, pk):
+    if request.method != 'POST':
+        return redirect('/#secao-todo')
+
+    pendencia = get_object_or_404(PendenciaPrioritaria, pk=pk)
+    concluida = request.POST.get('concluida') == 'true'
+    pendencia.concluida = concluida
+    pendencia.concluida_em = timezone.now() if concluida else None
+    pendencia.save(update_fields=['concluida', 'concluida_em'])
+
+    if concluida:
+        alertas_atuais = gerar_alertas_priorizados()
+        alertas_atuais.extend(_alertas_ativos())
+        relacionados = [
+            alerta for alerta in alertas_atuais
+            if (
+                pendencia.produto_id and alerta.get('produto_id') == pendencia.produto_id
+            ) or (
+                pendencia.ativo_id and alerta.get('ativo_id') == pendencia.ativo_id
+            )
+        ]
+        if relacionados:
+            prioridade = {'ALTA': 0, 'MEDIA': 1, 'BAIXA': 2}
+            alerta = min(relacionados, key=lambda item: prioridade.get(item.get('prioridade'), 3))
+            messages.warning(
+                request,
+                f"Tarefa '{pendencia.titulo}' concluída; alerta '{alerta['tipo_display']}' "
+                f"continua ativo para {alerta.get('produto_nome', 'o ativo')} e foi recalculado. "
+                "Atualize o estoque ou o status de manutenção para resolvê-lo."
+            )
+        else:
+            messages.success(
+                request,
+                f"Tarefa '{pendencia.titulo}' concluída. Recalculamos os alertas e não há "
+                "alerta ativo para o item vinculado."
+            )
+    else:
+        messages.info(request, f"Tarefa '{pendencia.titulo}' reaberta.")
+    return redirect('/#secao-todo')
+
+
+def recursos(request, transferencia_form=None, manutencao_form=None):
+    produtos_ativos = Produto.objects.filter(ativo=True, categoria__in=('MAQUINAS', 'VEICULOS'))
+    for produto in produtos_ativos:
+        AtivoRural.objects.get_or_create(produto=produto)
+
+    ativos = AtivoRural.objects.select_related('produto').prefetch_related('manutencoes').all()
+    context = {
+        'ativos': ativos,
+        'status_manutencao_choices': AtivoRural.STATUS_MANUTENCAO,
+        'unidades_consumo_choices': AtivoRural.UNIDADES_CONSUMO,
+        'manutencoes': ManutencaoAtivo.objects.select_related('ativo__produto')[:12],
+        'transferencias': TransferenciaRecurso.objects.select_related(
+            'produto_origem', 'produto_destino'
+        )[:12],
+        'movimentacoes_ativos': Movimentacao.objects.filter(ativo__isnull=False).select_related(
+            'produto', 'ativo__produto'
+        )[:12],
+        'manutencao_form': manutencao_form or ManutencaoAtivoForm(initial={'data': date.today()}),
+        'transferencia_form': transferencia_form or TransferenciaRecursoForm(initial={'data': date.today()}),
+    }
+    return render(request, 'estoque/recursos.html', context)
+
+
+def ativo_atualizar(request, pk):
+    ativo = get_object_or_404(AtivoRural, pk=pk)
+    if request.method != 'POST':
+        return redirect('estoque:recursos')
+
+    form = AtivoRuralForm(request.POST, instance=ativo)
+    if form.is_valid():
+        form.save()
+        messages.success(request, f"Status e consumo de '{ativo.produto.nome}' atualizados.")
+        return redirect('estoque:recursos')
+
+    messages.error(request, 'Revise o status e o consumo médio do ativo.')
+    return recursos(request)
+
+
+def manutencao_nova(request):
+    if request.method != 'POST':
+        return redirect('estoque:recursos')
+
+    form = ManutencaoAtivoForm(request.POST)
+    if form.is_valid():
+        with transaction.atomic():
+            manutencao = form.save()
+            ativo = manutencao.ativo
+            ativo.status_manutencao = 'OPERACIONAL'
+            ativo.save(update_fields=['status_manutencao', 'atualizado_em'])
+        messages.success(request, f"Manutenção registrada para '{ativo.produto.nome}'.")
+        return redirect('estoque:recursos')
+
+    messages.error(request, 'Revise os dados da manutenção.')
+    return recursos(request, manutencao_form=form)
+
+
+def transferencia_nova(request):
+    if request.method != 'POST':
+        return redirect('estoque:recursos')
+
+    form = TransferenciaRecursoForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, 'Revise a origem, o destino e as quantidades da transferência.')
+        return recursos(request, transferencia_form=form)
+
+    dados = form.cleaned_data
+    produto_origem = dados['produto_origem']
+    produto_destino = dados['produto_destino']
+    quantidade_origem = dados['quantidade_origem']
+    quantidade_destino = dados['quantidade_destino']
+    origem_movimentacao = (
+        dados['origem_recurso']
+        if dados['origem_recurso'] != 'MISTO'
+        else 'TRANSFERENCIA_INTERNA'
+    )
+    destino_movimentacao = (
+        'PRODUCAO_PROPRIA'
+        if dados['destino_tipo'] == 'PRODUCAO_PROPRIA'
+        else 'TRANSFERENCIA_INTERNA'
+    )
+
+    with transaction.atomic():
+        produto_origem = Produto.objects.select_for_update().get(pk=produto_origem.pk)
+        saldo_atual = produto_origem.saldo_atual
+        if quantidade_origem > saldo_atual:
+            form.add_error(
+                'quantidade_origem',
+                f'Saldo atualizado: {saldo_atual} {produto_origem.unidade}.'
+            )
+        else:
+            saida = Movimentacao.objects.create(
+                produto=produto_origem,
+                tipo='SAIDA',
+                quantidade=quantidade_origem,
+                data_movimentacao=dados['data'],
+                destino=produto_destino.nome,
+                responsavel=dados['responsavel'],
+                origem_recurso=origem_movimentacao,
+            )
+            entrada = Movimentacao.objects.create(
+                produto=produto_destino,
+                tipo='ENTRADA',
+                quantidade=quantidade_destino,
+                data_movimentacao=dados['data'],
+                destino=dados['local_destino'],
+                responsavel=dados['responsavel'],
+                origem_recurso=destino_movimentacao,
+            )
+            TransferenciaRecurso.objects.create(
+                produto_origem=produto_origem,
+                produto_destino=produto_destino,
+                quantidade_origem=quantidade_origem,
+                quantidade_destino=quantidade_destino,
+                origem_recurso=dados['origem_recurso'],
+                destino_tipo=dados['destino_tipo'],
+                data=dados['data'],
+                local_destino=dados['local_destino'],
+                responsavel=dados['responsavel'],
+                observacoes=dados['observacoes'],
+                movimentacao_saida=saida,
+                movimentacao_entrada=entrada,
+            )
+
+    if form.errors:
+        messages.error(request, 'O saldo mudou durante a operação; a transferência não foi gravada.')
+        return recursos(request, transferencia_form=form)
+
+    messages.success(
+        request,
+        f"Conversão registrada: {quantidade_origem} {produto_origem.unidade} de "
+        f"'{produto_origem.nome}' geraram {quantidade_destino} {produto_destino.unidade} "
+        f"de '{produto_destino.nome}'."
+    )
+    return redirect('estoque:recursos')
 
 
 # ---------------------------------------------------------------------------

@@ -23,6 +23,9 @@
     </div>
 
     <div class="page-actions-group">
+      <a href="{% url 'estoque:produto_novo' %}" class="btn btn-outline-agro">
+        <span>＋</span> Cadastrar Produto
+      </a>
       <a href="{% url 'estoque:movimentacao_nova' %}" class="btn btn-primary-agro">
         <span>➕</span> Nova Movimentação
       </a>
@@ -144,7 +147,7 @@
                 <a href="{% url 'estoque:produto_detalhe' p.id %}" class="table-product-link">
                   <strong>{{ p.nome }}</strong>
                 </a>
-                <span class="product-unit-tag">{{ p.unidade }}</span>
+                <span class="product-unit-tag">{{ p.tipo_item|default:"Item" }} · {{ p.unidade }}</span>
               </td>
 
               <!-- Categoria -->

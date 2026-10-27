@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}Recursos e Produção | AGROGADO{% endblock %}
+
+{% block content %}
+<div class="page-top-bar">
+  <div class="page-title-group">
+    <nav class="breadcrumb-nav" aria-label="Navegação estrutural">
+      <a href="{% url 'estoque:painel' %}">Painel</a>
+      <span class="breadcrumb-sep">/</span>
+      <span class="breadcrumb-current">Recursos e Produção</span>
+    </nav>
+    <h2 class="page-heading">Recursos e Produção da Fazenda</h2>
+    <p class="page-subheading">Ativos, manutenção, consumo operacional e transformação de produção própria.</p>
+  </div>
+  <div class="page-actions-group">
+    <a class="btn btn-outline-agro" href="{% url 'estoque:produto_novo' %}">Cadastrar item</a>
+    <a class="btn btn-primary-agro" href="{% url 'estoque:movimentacao_nova' %}">Nova movimentação</a>
+  </div>
+</div>
+
+<section class="section-container" aria-labelledby="ativos-title">
+  <div class="section-header-row">
+    <div>
+      <div class="section-badge">Frota e equipamentos</div>
+      <h3 class="section-title" id="ativos-title">Veículos e maquinários</h3>
+      <p class="section-desc">Status, consumo médio, leitura recente e manutenção registrada.</p>
+    </div>
+  </div>
+  {% if ativos %}
+    <div class="table-responsive-wrapper card-table-shadow">
+      <table class="agrogado-table">
+        <thead>
+          <tr>
+            <th>Ativo</th>
+            <th>Identificação</th>
+            <th>Última leitura</th>
+            <th>Status e consumo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ativo in ativos %}
+            {% with leitura=ativo.ultima_movimentacao %}
+              <tr>
+                <td>
+                  <strong>{{ ativo.produto.nome }}</strong><br>
+                  <span class="text-muted">{{ ativo.produto.tipo_item|default:ativo.produto.get_categoria_display }} · {{ ativo.produto.modelo }}</span>
+                </td>
+                <td>
+                  {% if ativo.produto.placa %}Placa {{ ativo.produto.placa }}{% endif %}
+                  {% if ativo.produto.numero_serie %}<br>Patrimônio {{ ativo.produto.numero_serie }}{% endif %}
+                  {% if ativo.produto.chassi %}<br>Chassi {{ ativo.produto.chassi }}{% endif %}
+                </td>
+                <td>
+                  {% if leitura and leitura.odometro_km is not None %}{{ leitura.odometro_km }} km{% endif %}
+                  {% if leitura and leitura.horimetro_h is not None %}{{ leitura.horimetro_h }} h{% endif %}
+                  {% if not leitura or leitura.odometro_km is None and leitura.horimetro_h is None %}Sem leitura{% endif %}
+                </td>
+                <td>
+                  <form method="post" action="{% url 'estoque:ativo_atualizar' ativo.id %}" class="form-grid-modern">
+                    {% csrf_token %}
+                    <select class="form-control-custom" name="status_manutencao" aria-label="Status de manutenção de {{ ativo.produto.nome }}">
+                      {% for value, label in status_manutencao_choices %}
+                        <option value="{{ value }}" {% if ativo.status_manutencao == value %}selected{% endif %}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                    <input class="form-control-custom" type="number" min="0.01" step="0.01" name="consumo_medio" value="{{ ativo.consumo_medio|default_if_none:'' }}" placeholder="Consumo médio" aria-label="Consumo médio de {{ ativo.produto.nome }}">
+                    <select class="form-control-custom" name="unidade_consumo" aria-label="Unidade de consumo de {{ ativo.produto.nome }}">
+                      <option value="">Unidade</option>
+                      {% for value, label in unidades_consumo_choices %}
+                        <option value="{{ value }}" {% if ativo.unidade_consumo == value %}selected{% endif %}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                    <button class="btn btn-sm btn-outline-agro" type="submit">Salvar</button>
+                  </form>
+                  {% if ativo.consumo_medio %}<span class="form-help-text">{{ ativo.consumo_medio }} {{ ativo.get_unidade_consumo_display }}</span>{% endif %}
+                </td>
+              </tr>
+            {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-muted">Nenhum veículo ou maquinário cadastrado. Cadastre um item nas categorias correspondentes.</p>
+  {% endif %}
+</section>
+
+<section class="section-container" aria-labelledby="insumos-ativos-title">
+  <div class="section-header-row">
+    <div>
+      <div class="section-badge">Uso operacional</div>
+      <h3 class="section-title" id="insumos-ativos-title">Insumos vinculados aos ativos</h3>
+      <p class="section-desc">Combustível, óleo, pneus e peças podem ser associados ao veículo ou equipamento utilizado.</p>
+    </div>
+  </div>
+  {% if movimentacoes_ativos %}
+    <div class="table-responsive-wrapper card-table-shadow">
+      <table class="agrogado-table">
+        <thead><tr><th>Data</th><th>Insumo</th><th>Ativo</th><th>Quantidade</th><th>Origem</th><th>Responsável</th></tr></thead>
+        <tbody>
+          {% for movimento in movimentacoes_ativos %}
+            <tr>
+              <td>{{ movimento.data_movimentacao|date:"d/m/Y" }}</td>
+              <td>{{ movimento.produto.nome }}</td>
+              <td>{{ movimento.ativo.produto.nome }}</td>
+              <td>{{ movimento.get_tipo_display }} · {{ movimento.quantidade }} {{ movimento.produto.unidade }}</td>
+              <td>{{ movimento.get_origem_recurso_display }}</td>
+              <td>{{ movimento.responsavel|default:"—" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-muted">Nenhum insumo operacional associado a um ativo ainda.</p>
+  {% endif %}
+</section>
+
+<section class="section-container" aria-labelledby="manutencao-title">
+  <div class="section-header-row">
+    <div>
+      <div class="section-badge">Histórico técnico</div>
+      <h3 class="section-title" id="manutencao-title">Registrar manutenção</h3>
+      <p class="section-desc">Registre revisão, reparo, pneus, custo e leitura do equipamento.</p>
+    </div>
+  </div>
+  <form method="post" action="{% url 'estoque:manutencao_nova' %}" class="form-grid-modern">
+    {% csrf_token %}
+    {% for field in manutencao_form %}
+      <div class="form-group-item">
+        <label class="form-label-custom" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+    {% endfor %}
+    <div class="form-actions-footer"><button class="btn btn-primary-agro" type="submit">Registrar manutenção</button></div>
+  </form>
+  {% if manutencoes %}
+    <div class="table-responsive-wrapper card-table-shadow" style="margin-top: 1.5rem;">
+      <table class="agrogado-table">
+        <thead><tr><th>Data</th><th>Ativo</th><th>Serviço</th><th>Leitura</th><th>Custo</th><th>Oficina</th></tr></thead>
+        <tbody>
+          {% for item in manutencoes %}
+            <tr>
+              <td>{{ item.data|date:"d/m/Y" }}</td><td>{{ item.ativo.produto.nome }}</td>
+              <td>{{ item.get_tipo_display }} · {{ item.descricao }}</td>
+              <td>{% if item.odometro_km is not None %}{{ item.odometro_km }} km{% endif %}{% if item.horimetro_h is not None %}{{ item.horimetro_h }} h{% endif %}</td>
+              <td>{% if item.custo is not None %}R$ {{ item.custo|floatformat:2 }}{% else %}—{% endif %}</td>
+              <td>{{ item.fornecedor|default:"—" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+</section>
+
+<section class="section-container" aria-labelledby="transferencias-title">
+  <div class="section-header-row">
+    <div>
+      <div class="section-badge">Produção própria</div>
+      <h3 class="section-title" id="transferencias-title">Converter ou destinar recurso</h3>
+      <p class="section-desc">Registre a origem externa ou própria e as quantidades de entrada e saída, cada uma na unidade do produto.</p>
+    </div>
+  </div>
+  <form method="post" action="{% url 'estoque:transferencia_nova' %}" class="form-grid-modern">
+    {% csrf_token %}
+    {% for field in transferencia_form %}
+      <div class="form-group-item">
+        <label class="form-label-custom" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<div class="form-help-text">{{ field.help_text }}</div>{% endif %}
+        {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+      </div>
+    {% endfor %}
+    <div class="form-actions-footer"><button class="btn btn-primary-agro" type="submit">Registrar conversão interna</button></div>
+  </form>
+  {% if transferencias %}
+    <div class="table-responsive-wrapper card-table-shadow" style="margin-top: 1.5rem;">
+      <table class="agrogado-table">
+        <thead><tr><th>Data</th><th>Origem</th><th>Quantidade</th><th>Destino</th><th>Quantidade</th><th>Origem do recurso</th><th>Finalidade</th></tr></thead>
+        <tbody>
+          {% for transferencia in transferencias %}
+            <tr>
+              <td>{{ transferencia.data|date:"d/m/Y" }}</td>
+              <td>{{ transferencia.produto_origem.nome }}</td>
+              <td>{{ transferencia.quantidade_origem }} {{ transferencia.produto_origem.unidade }}</td>
+              <td>{{ transferencia.produto_destino.nome }}{% if transferencia.local_destino %}<br>{{ transferencia.local_destino }}{% endif %}</td>
+              <td>{{ transferencia.quantidade_destino }} {{ transferencia.produto_destino.unidade }}</td>
+              <td>{{ transferencia.get_origem_recurso_display }}</td>
+              <td>{{ transferencia.get_destino_tipo_display }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -838,6 +838,9 @@ def gerar_alertas_priorizados(
     produtos = Produto.objects.filter(ativo=True)
 
     for p in produtos:
+        if p.categoria in ('MAQUINAS', 'VEICULOS'):
+            continue
+
         # 1. Estoque Crítico e Falta (RF03.1)
         alerta_critico = calcular_estoque_critico(p)
         if alerta_critico:
