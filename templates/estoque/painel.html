@@ -513,6 +513,9 @@
           </div>
 
           <div class="lote-card-footer">
+            <a href="{% url 'estoque:lote_mortalidade' lote.id %}" class="btn btn-xs btn-outline" title="Registrar morte de animal">
+              Registrar mortalidade
+            </a>
             <a href="{% url 'estoque:lote_editar' lote.id %}" class="btn btn-xs btn-outline" id="btn-edit-lote-{{ lote.id }}">
               ✏️ Editar Lote
             </a>
@@ -573,6 +576,7 @@
                 {% endif %}
               </td>
               <td class="text-center actions-cell">
+                <a href="{% url 'estoque:lote_mortalidade' lote.id %}" class="btn-action-icon" title="Registrar mortalidade">☠</a>
                 <a href="{% url 'estoque:lote_editar' lote.id %}" class="btn-action-icon" title="Editar Lote">✏️</a>
               </td>
             </tr>

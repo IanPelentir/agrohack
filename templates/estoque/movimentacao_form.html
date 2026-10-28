@@ -74,6 +74,7 @@
                 {{ p.nome }}{% if p.tipo_item %} · {{ p.tipo_item }}{% endif %} ({{ p.unidade }}) — Saldo: {{ p.saldo }} {{ p.unidade }}
               </option>
             {% endfor %}
+            <option value="__novo__" {% if produto_selecionado_id == '__novo__' %}selected{% endif %}>＋ Cadastrar novo produto...</option>
           </select>
           <div class="product-movement-context" id="contexto-produto" hidden aria-live="polite">
             <strong id="contexto-categoria"></strong>
@@ -81,6 +82,19 @@
           </div>
           <div class="form-help-text" id="help-saldo-info">
             Selecione o produto que terá sua quantidade movimentada.
+          </div>
+        </div>
+
+        <div class="form-group-item" id="novo-produto-fields" hidden>
+          <h4>Dados do novo produto</h4>
+          <div class="form-grid-modern">
+            {% for field in novo_produto_form %}
+              <div class="form-group-item">
+                <label for="{{ field.id_for_label }}" class="form-label-custom">{{ field.label }}{% if field.field.required %} <span class="required-star">*</span>{% endif %}</label>
+                {{ field }}
+                {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+              </div>
+            {% endfor %}
           </div>
         </div>
 
@@ -265,18 +279,36 @@
   const seletorProduto = document.getElementById('id_produto');
   const seletorFluxo = document.getElementById('id_tipo');
   const quantidade = document.getElementById('id_quantidade');
+  const camposNovoProduto = document.getElementById('novo-produto-fields');
+  const categoriaNovoProduto = document.getElementById('id_novo_produto-categoria');
   const categoriasRastreaveis = ['DEFENSIVOS', 'FERTILIZANTES', 'SEMENTES', 'MEDICAMENTOS', 'SUPLEMENTOS'];
 
   function atualizarFormularioMovimentacao() {
     const produto = seletorProduto.options[seletorProduto.selectedIndex];
+    const ehNovoProduto = seletorProduto.value === '__novo__';
+    if (ehNovoProduto && seletorFluxo.value !== 'ENTRADA') {
+      seletorFluxo.value = 'ENTRADA';
+    }
     const fluxo = seletorFluxo.value;
-    const categoria = produto ? produto.dataset.categoria : '';
+    camposNovoProduto.hidden = !ehNovoProduto;
+    document.querySelectorAll('#novo-produto-fields input, #novo-produto-fields select').forEach((campo) => {
+      campo.required = ehNovoProduto && campo.name !== 'novo_produto-tipo_item';
+    });
+    const categoria = ehNovoProduto ? categoriaNovoProduto.value : produto ? produto.dataset.categoria : '';
     const ehAtivo = ['MAQUINAS', 'VEICULOS'].includes(categoria);
     const ehFerramenta = categoria === 'FERRAMENTAS';
     const ehItemUnitario = ehAtivo || ehFerramenta;
     const ehInsumoOperacional = ['INSUMOS', 'COMBUSTIVEIS', 'MANUTENCAO', 'MATERIAIS_CONSTRUCAO', 'OUTROS'].includes(categoria);
     const ehEntrada = fluxo === 'ENTRADA';
     const ehRastreavel = categoriasRastreaveis.includes(categoria);
+
+    if (ehNovoProduto) {
+      document.getElementById('contexto-produto').hidden = true;
+      document.getElementById('help-saldo-info').textContent = 'O produto será cadastrado junto com esta entrada.';
+      if (!ehEntrada) {
+        document.getElementById('ajuda-fluxo').textContent = 'Um produto novo precisa ser registrado por uma entrada.';
+      }
+    }
 
     document.querySelectorAll('[data-show-for]').forEach((elemento) => {
       const regra = elemento.dataset.showFor;
@@ -298,6 +330,17 @@
     const categoriaContexto = document.getElementById('contexto-categoria');
     const especificacoes = document.getElementById('contexto-especificacoes');
     const saldoInfo = document.getElementById('help-saldo-info');
+    if (ehNovoProduto) {
+      quantidade.step = ehAtivo || ehFerramenta ? '1' : '0.01';
+      quantidade.min = ehAtivo || ehFerramenta ? '1' : '0.01';
+      quantidade.placeholder = ehAtivo || ehFerramenta ? 'Ex: 1' : `Ex: 50 ${document.getElementById('id_novo_produto-unidade').value}`;
+      document.getElementById('ajuda-quantidade').textContent = ehAtivo || ehFerramenta
+        ? 'Informe quantas unidades estão entrando.'
+        : 'Informe a quantidade na unidade cadastrada para este produto.';
+      document.getElementById('btn-salvar-mov').lastChild.textContent = ' Cadastrar produto e gravar entrada';
+      return;
+    }
+
     if (!produto || !produto.value) {
       contexto.hidden = true;
       saldoInfo.textContent = 'Selecione o produto que terá sua quantidade movimentada.';
@@ -353,6 +396,8 @@
 
   seletorProduto.addEventListener('change', atualizarFormularioMovimentacao);
   seletorFluxo.addEventListener('change', atualizarFormularioMovimentacao);
+  categoriaNovoProduto.addEventListener('change', atualizarFormularioMovimentacao);
+  document.getElementById('id_novo_produto-unidade').addEventListener('input', atualizarFormularioMovimentacao);
   atualizarFormularioMovimentacao();
 </script>
 {% endblock %}

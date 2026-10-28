@@ -6,8 +6,10 @@ from datetime import date, timedelta
 from .models import (
     AtivoRural,
     Lote,
+    LoteAnimais,
     ManutencaoAtivo,
     Movimentacao,
+    MortalidadeAnimal,
     PendenciaPrioritaria,
     Produto,
     TransferenciaRecurso,
@@ -115,6 +117,40 @@ class BaseDadosDemonstracaoTestCase(TestCase):
         self.assertIsNotNone(alerta_sal)
         self.assertEqual(alerta_sal['prioridade'], 'ALTA')
 
+    def test_movimentacao_cadastra_novo_produto_com_entrada_inicial(self):
+        response = self.client.post(reverse('estoque:movimentacao_nova'), {
+            'produto': '__novo__',
+            'tipo': 'ENTRADA',
+            'quantidade': '18.50',
+            'data_movimentacao': date.today().isoformat(),
+            'novo_produto-nome': 'Produto criado na entrada',
+            'novo_produto-categoria': 'INSUMOS',
+            'novo_produto-tipo_item': 'Adubo orgânico',
+            'novo_produto-unidade': 'kg',
+            'preco_unitario': '4.20',
+        })
+
+        self.assertRedirects(response, reverse('estoque:painel'))
+        produto = Produto.objects.get(nome='Produto criado na entrada')
+        self.assertEqual(produto.saldo_atual, Decimal('18.50'))
+        self.assertEqual(produto.movimentacoes.count(), 1)
+        self.assertEqual(produto.movimentacoes.first().preco_unitario, Decimal('4.20'))
+
+    def test_entrada_invalida_nao_salva_novo_produto(self):
+        response = self.client.post(reverse('estoque:movimentacao_nova'), {
+            'produto': '__novo__',
+            'tipo': 'ENTRADA',
+            'quantidade': 'invalida',
+            'data_movimentacao': date.today().isoformat(),
+            'novo_produto-nome': 'Produto não deve ficar órfão',
+            'novo_produto-categoria': 'INSUMOS',
+            'novo_produto-tipo_item': '',
+            'novo_produto-unidade': 'kg',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Produto.objects.filter(nome='Produto não deve ficar órfão').exists())
+
     def test_bloqueio_saldo_negativo_rn01_1(self):
         """RN01.1: Saída superior ao saldo atual disponível deve ser estritamente bloqueada."""
         sal = Produto.objects.get(nome="Sal Mineral Bovino 80 Fos 30kg")
@@ -217,6 +253,45 @@ class BaseDadosDemonstracaoTestCase(TestCase):
         lote1 = next(l for l in response.context['lotes_animais'] if 'Lote 01' in l['nome'])
         self.assertEqual(lote1['consumo_diario_cabeca_g'], 240)  # 120g * 2 na seca
 
+    def test_registrar_mortalidade_reduz_lote_e_preserva_historico(self):
+        lote = LoteAnimais.objects.create(
+            nome='Lote mortalidade teste', categoria='CRIA', quantidade_cabecas=8,
+            pasto_localizacao='Piquete teste',
+        )
+
+        response = self.client.post(reverse('estoque:lote_mortalidade', args=[lote.pk]), {
+            'categoria_animal': 'BEZERRO',
+            'quantidade': '2',
+            'data': date.today().isoformat(),
+            'causa': 'Doença',
+            'responsavel': 'Veterinária teste',
+        })
+
+        self.assertRedirects(response, reverse('estoque:lote_mortalidade', args=[lote.pk]))
+        lote.refresh_from_db()
+        self.assertEqual(lote.quantidade_cabecas, 6)
+        ocorrencia = MortalidadeAnimal.objects.get(lote_animais=lote)
+        self.assertEqual(ocorrencia.quantidade, 2)
+        self.assertEqual(ocorrencia.categoria_animal, 'BEZERRO')
+
+    def test_mortalidade_nao_pode_exceder_cabecas_do_lote(self):
+        lote = LoteAnimais.objects.create(
+            nome='Lote limite mortalidade', categoria='CORTE', quantidade_cabecas=2,
+            pasto_localizacao='Piquete teste',
+        )
+
+        response = self.client.post(reverse('estoque:lote_mortalidade', args=[lote.pk]), {
+            'categoria_animal': 'VACA',
+            'quantidade': '3',
+            'data': date.today().isoformat(),
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'O lote possui apenas 2 cabeça(s) disponível(is).')
+        lote.refresh_from_db()
+        self.assertEqual(lote.quantidade_cabecas, 2)
+        self.assertFalse(MortalidadeAnimal.objects.filter(lote_animais=lote).exists())
+
     def test_cadastro_produto_maquina_com_identificacao(self):
         response_form = self.client.get(reverse('estoque:produto_novo'))
         self.assertEqual(response_form.status_code, 200)
@@ -260,6 +335,59 @@ class BaseDadosDemonstracaoTestCase(TestCase):
         self.assertEqual(response_detalhe.status_code, 200)
         self.assertContains(response_detalhe, 'Sem caixa')
         self.assertContains(response_detalhe, 'PAT-2026-001')
+
+    def test_produto_pode_ser_cadastrado_sem_tipo_especifico(self):
+        response = self.client.post(reverse('estoque:produto_novo'), {
+            'nome': 'Item sem tipo específico',
+            'categoria': 'OUTROS',
+            'unidade': 'un',
+            'tipo_embalagem': 'UNIDADE',
+        })
+
+        self.assertEqual(response.status_code, 302)
+        produto = Produto.objects.get(nome='Item sem tipo específico')
+        self.assertEqual(produto.tipo_item, '')
+
+    def test_editar_produto_preserva_movimentacoes(self):
+        produto = Produto.objects.create(
+            nome='Produto para editar', categoria='INSUMOS', unidade='kg'
+        )
+        movimentacao = Movimentacao.objects.create(
+            produto=produto, tipo='ENTRADA', quantidade=Decimal('5'),
+            data_movimentacao=date.today(),
+        )
+
+        response = self.client.post(
+            reverse('estoque:produto_editar', args=[produto.pk]),
+            {
+                'nome': 'Produto editado',
+                'categoria': 'INSUMOS',
+                'unidade': 'kg',
+                'tipo_embalagem': 'UNIDADE',
+            },
+        )
+
+        self.assertRedirects(response, reverse('estoque:produto_detalhe', args=[produto.pk]))
+        produto.refresh_from_db()
+        self.assertEqual(produto.nome, 'Produto editado')
+        self.assertTrue(Movimentacao.objects.filter(pk=movimentacao.pk).exists())
+
+    def test_desativar_produto_preserva_historico_e_remove_da_lista(self):
+        produto = Produto.objects.create(
+            nome='Produto para desativar', categoria='INSUMOS', unidade='kg'
+        )
+        movimentacao = Movimentacao.objects.create(
+            produto=produto, tipo='ENTRADA', quantidade=Decimal('3'),
+            data_movimentacao=date.today(),
+        )
+
+        response = self.client.post(reverse('estoque:produto_excluir', args=[produto.pk]))
+
+        self.assertRedirects(response, reverse('estoque:produto_lista'))
+        produto.refresh_from_db()
+        self.assertFalse(produto.ativo)
+        self.assertTrue(Movimentacao.objects.filter(pk=movimentacao.pk).exists())
+        self.assertNotContains(self.client.get(reverse('estoque:produto_lista')), produto.nome)
 
     def test_cadastro_e_movimentacao_de_veiculo(self):
         response = self.client.post(reverse('estoque:produto_novo'), {
@@ -305,6 +433,17 @@ class BaseDadosDemonstracaoTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context['produtos']), 1)
         self.assertEqual(response.context['produtos'][0]['tipo_item'], 'Óleo de motor 15W40')
+
+    def test_filtro_categoria_exibe_descricao_e_filtra_codigo(self):
+        response = self.client.get(
+            reverse('estoque:produto_lista'), {'categoria': 'VEICULOS'}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<option value="VEICULOS"')
+        self.assertContains(response, 'Veículos e Automóveis Rurais')
+        self.assertTrue(response.context['produtos'])
+        self.assertTrue(all(p['categoria'] == 'Veículos e Automóveis Rurais' for p in response.context['produtos']))
 
     def test_compra_registra_comprador_valor_e_data(self):
         produto = Produto.objects.create(

@@ -32,6 +32,9 @@
     </div>
 
     <div class="page-actions-group">
+      <a href="{% url 'estoque:produto_editar' produto.id %}" class="btn btn-outline-agro" id="btn-editar-produto">
+        <span>✏️</span> Editar produto
+      </a>
       <a href="{% url 'estoque:consumo_produto' produto.id %}" class="btn btn-outline-agro" id="btn-ver-grafico">
         <span>📈</span> Gráfico de Consumo
       </a>
@@ -41,6 +44,10 @@
       <a href="{% url 'estoque:produto_lista' %}" class="btn btn-outline-agro">
         Voltar à Lista
       </a>
+      <form method="post" action="{% url 'estoque:produto_excluir' produto.id %}" onsubmit="return confirm('Desativar este produto? O histórico de movimentações será preservado.');">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-agro" id="btn-desativar-produto">Desativar produto</button>
+      </form>
     </div>
   </div>
 

@@ -25,6 +25,9 @@
     </div>
 
     <div class="page-actions-group">
+      {% if lote %}
+        <a href="{% url 'estoque:lote_mortalidade' lote.id %}" class="btn btn-outline-agro">Registrar mortalidade</a>
+      {% endif %}
       <a href="{% url 'estoque:painel' %}#secao-lotes" class="btn btn-outline-agro">
         Voltar aos Lotes
       </a>

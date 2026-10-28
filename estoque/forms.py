@@ -8,6 +8,7 @@ from .models import (
     Produto,
     Lote,
     Movimentacao,
+    MortalidadeAnimal,
     TransferenciaRecurso,
 )
 
@@ -16,6 +17,7 @@ class ProdutoForm(forms.ModelForm):
     tipo_item = forms.CharField(
         label='Tipo específico',
         max_length=100,
+        required=False,
         help_text='Digite livremente: caminhonete, trator, óleo 15W40, chave de roda, sal mineral...',
         widget=forms.TextInput(attrs={
             'class': 'form-control-custom',
@@ -49,6 +51,18 @@ class ProdutoForm(forms.ModelForm):
             'preco_referencia': forms.NumberInput(attrs={'class': 'form-control-custom', 'step': '0.01', 'min': '0'}),
             'descricao': forms.Textarea(attrs={'class': 'form-control-custom', 'rows': 3}),
             'embalagem_em_caixa': forms.CheckboxInput(attrs={'class': 'form-control-custom'}),
+        }
+
+
+class ProdutoMovimentacaoForm(forms.ModelForm):
+    class Meta:
+        model = Produto
+        fields = ['nome', 'categoria', 'tipo_item', 'unidade']
+        widgets = {
+            'nome': forms.TextInput(attrs={'class': 'form-control-custom'}),
+            'categoria': forms.Select(attrs={'class': 'form-control-custom'}),
+            'tipo_item': forms.TextInput(attrs={'class': 'form-control-custom'}),
+            'unidade': forms.TextInput(attrs={'class': 'form-control-custom'}),
         }
 
 
@@ -137,6 +151,23 @@ class LoteAnimaisForm(forms.ModelForm):
             'consumo_diario_cabeca': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'placeholder': 'Ex: 0.120'}),
             'insumo_suplementar': forms.Select(attrs={'class': 'form-control'}),
             'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Observações do manejo ou saúde do lote'}),
+        }
+
+
+class MortalidadeAnimalForm(forms.ModelForm):
+    class Meta:
+        model = MortalidadeAnimal
+        fields = ['categoria_animal', 'quantidade', 'data', 'causa', 'responsavel', 'observacoes']
+        widgets = {
+            'categoria_animal': forms.Select(attrs={'class': 'form-control-custom'}),
+            'quantidade': forms.NumberInput(attrs={'class': 'form-control-custom', 'min': '1', 'step': '1'}),
+            'data': forms.DateInput(
+                attrs={'class': 'form-control-custom', 'type': 'date'},
+                format='%Y-%m-%d',
+            ),
+            'causa': forms.TextInput(attrs={'class': 'form-control-custom'}),
+            'responsavel': forms.TextInput(attrs={'class': 'form-control-custom'}),
+            'observacoes': forms.Textarea(attrs={'class': 'form-control-custom', 'rows': 3}),
         }
 
 

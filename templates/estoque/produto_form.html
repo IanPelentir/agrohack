@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Cadastrar Produto | AGROGADO{% endblock %}
+{% block title %}{{ titulo|default:'Cadastrar Produto' }} | AGROGADO{% endblock %}
 
 {% block content %}
 <div class="form-page-container">
@@ -11,9 +11,9 @@
         <span class="breadcrumb-sep">/</span>
         <a href="{% url 'estoque:produto_lista' %}">Produtos</a>
         <span class="breadcrumb-sep">/</span>
-        <span class="breadcrumb-current">Cadastro</span>
+        <span class="breadcrumb-current">{{ titulo|default:'Cadastro' }}</span>
       </nav>
-      <h2 class="page-heading">Cadastrar produto da propriedade</h2>
+      <h2 class="page-heading">{{ titulo|default:'Cadastrar produto da propriedade' }}</h2>
       <p class="page-subheading">Escolha a categoria para ver os campos de embalagem ou identificação patrimonial correspondentes.</p>
     </div>
   </div>
@@ -126,8 +126,8 @@
       </div>
 
       <div class="form-actions-footer">
-        <a href="{% url 'estoque:produto_lista' %}" class="btn btn-outline-agro">Cancelar</a>
-        <button type="submit" class="btn btn-primary-agro btn-lg">Cadastrar Produto</button>
+        <a href="{% if produto %}{% url 'estoque:produto_detalhe' produto.pk %}{% else %}{% url 'estoque:produto_lista' %}{% endif %}" class="btn btn-outline-agro">Cancelar</a>
+        <button type="submit" class="btn btn-primary-agro btn-lg">{% if produto %}Salvar alterações{% else %}Cadastrar Produto{% endif %}</button>
       </div>
     </form>
   </div>

@@ -14,6 +14,8 @@ urlpatterns = [
     # Consulta organizada de produtos
     path('produtos/', views.produto_lista, name='produto_lista'),
     path('produtos/novo/', views.produto_novo, name='produto_novo'),
+    path('produtos/<int:pk>/editar/', views.produto_editar, name='produto_editar'),
+    path('produtos/<int:pk>/excluir/', views.produto_excluir, name='produto_excluir'),
     path('produtos/<int:pk>/', views.produto_detalhe, name='produto_detalhe'),
 
     # RF03.6: Acompanhamento Temporal
@@ -34,6 +36,7 @@ urlpatterns = [
 
     # Gestão Amigável de Lotes de Gado (LoteAnimais)
     path('lotes/novo/', views.lote_novo, name='lote_novo'),
+    path('lotes/<int:pk>/mortalidade/', views.lote_mortalidade, name='lote_mortalidade'),
     path('lotes/<int:pk>/editar/', views.lote_editar, name='lote_editar'),
     path('lotes/<int:pk>/excluir/', views.lote_excluir, name='lote_excluir'),
 ]

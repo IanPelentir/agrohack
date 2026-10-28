@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Mortalidade | AGROGADO{% endblock %}
+
+{% block content %}
+<div class="form-page-container">
+  <div class="page-top-bar">
+    <div class="page-title-group">
+      <nav class="breadcrumb-nav" aria-label="Navegação estrutural">
+        <a href="{% url 'estoque:painel' %}">Painel</a>
+        <span class="breadcrumb-sep">/</span>
+        <a href="{% url 'estoque:painel' %}#secao-lotes">Lotes de gado</a>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-current">Mortalidade</span>
+      </nav>
+      <h2 class="page-heading">Registrar mortalidade animal</h2>
+      <p class="page-subheading">{{ lote.nome }} · {{ lote.quantidade_cabecas }} cabeça(s) no lote</p>
+    </div>
+    <div class="page-actions-group">
+      <a href="{% url 'estoque:lote_editar' lote.id %}" class="btn btn-outline-agro">Voltar ao lote</a>
+    </div>
+  </div>
+
+  <div class="form-card-modern">
+    <form method="post">
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
+      <div class="form-grid-modern">
+        {% for field in form %}
+          <div class="form-group-item">
+            <label for="{{ field.id_for_label }}" class="form-label-custom">
+              {{ field.label }}{% if field.field.required %} <span class="required-star">*</span>{% endif %}
+            </label>
+            {{ field }}
+            {% if field.help_text %}<div class="form-help-text">{{ field.help_text }}</div>{% endif %}
+            {% for error in field.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+      <div class="form-actions-footer">
+        <a href="{% url 'estoque:lote_editar' lote.id %}" class="btn btn-outline-agro">Cancelar</a>
+        <button type="submit" class="btn btn-primary-agro btn-lg">Registrar óbito e atualizar rebanho</button>
+      </div>
+    </form>
+  </div>
+
+  <section class="section-container" aria-labelledby="historico-mortalidade-heading">
+    <div class="section-header-row">
+      <div>
+        <div class="section-badge">Histórico do lote</div>
+        <h3 class="section-title" id="historico-mortalidade-heading">Ocorrências registradas</h3>
+      </div>
+    </div>
+    {% if historico %}
+      <div class="table-responsive-wrapper card-table-shadow">
+        <table class="agrogado-table">
+          <thead>
+            <tr><th>Data</th><th>Animal</th><th>Quantidade</th><th>Causa provável</th><th>Responsável</th></tr>
+          </thead>
+          <tbody>
+            {% for ocorrencia in historico %}
+              <tr>
+                <td>{{ ocorrencia.data|date:'d/m/Y' }}</td>
+                <td>{{ ocorrencia.get_categoria_animal_display }}</td>
+                <td>{{ ocorrencia.quantidade }}</td>
+                <td>{{ ocorrencia.causa|default:'Não informada' }}</td>
+                <td>{{ ocorrencia.responsavel|default:'Não informado' }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="section-desc">Nenhuma ocorrência de mortalidade registrada para este lote.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -45,8 +45,10 @@ from .analises import (
 from .forms import (
     AtivoRuralForm,
     ManutencaoAtivoForm,
+    MortalidadeAnimalForm,
     PendenciaPrioritariaForm,
     ProdutoForm,
+    ProdutoMovimentacaoForm,
     TransferenciaRecursoForm,
 )
 from .models import (
@@ -55,6 +57,7 @@ from .models import (
     LoteAnimais,
     ManutencaoAtivo,
     Movimentacao,
+    MortalidadeAnimal,
     PendenciaPrioritaria,
     Produto,
     TransferenciaRecurso,
@@ -449,6 +452,34 @@ def produto_novo(request):
     return render(request, 'estoque/produto_form.html', {'form': form})
 
 
+def produto_editar(request, pk):
+    """Atualiza os dados cadastrais sem alterar o histórico de movimentações."""
+    produto = get_object_or_404(Produto, pk=pk, ativo=True)
+    form = ProdutoForm(request.POST or None, instance=produto)
+    if request.method == 'POST' and form.is_valid():
+        produto = form.save()
+        if produto.categoria in ('MAQUINAS', 'VEICULOS'):
+            AtivoRural.objects.get_or_create(produto=produto)
+        messages.success(request, f"Produto '{produto.nome}' atualizado.")
+        return redirect('estoque:produto_detalhe', pk=produto.pk)
+    return render(request, 'estoque/produto_form.html', {
+        'form': form,
+        'produto': produto,
+        'titulo': f'Editar {produto.nome}',
+    })
+
+
+def produto_excluir(request, pk):
+    """Desativa o produto para preservar movimentações e rastreabilidade."""
+    produto = get_object_or_404(Produto, pk=pk, ativo=True)
+    if request.method == 'POST':
+        produto.ativo = False
+        produto.save(update_fields=['ativo', 'atualizado_em'])
+        messages.success(request, f"Produto '{produto.nome}' desativado; o histórico foi preservado.")
+        return redirect('estoque:produto_lista')
+    return redirect('estoque:produto_detalhe', pk=produto.pk)
+
+
 # ---------------------------------------------------------------------------
 # Ficha Detalhada de Produto
 # ---------------------------------------------------------------------------
@@ -458,7 +489,7 @@ def produto_detalhe(request, pk):
     Ficha detalhada do insumo: lotes de validade, histórico de movimentações,
     alertas específicos e metodologia de cálculo auditável (RF02.3).
     """
-    p = get_object_or_404(Produto, pk=pk)
+    p = get_object_or_404(Produto, pk=pk, ativo=True)
     saldo = p.saldo_atual
     minimo = p.estoque_minimo
     hoje = date.today()
@@ -901,6 +932,11 @@ def movimentacao_nova(request):
 
     if request.method == 'POST':
         produto_id    = request.POST.get('produto')
+        novo_produto_selecionado = produto_id == '__novo__'
+        novo_produto_form = ProdutoMovimentacaoForm(
+            request.POST if novo_produto_selecionado else None,
+            prefix='novo_produto',
+        )
         tipo          = request.POST.get('tipo')
         quantidade_str = request.POST.get('quantidade', '').strip()
         data_str      = request.POST.get('data_movimentacao', request.POST.get('data', '')).strip()
@@ -917,7 +953,41 @@ def movimentacao_nova(request):
         ativo_id      = request.POST.get('ativo', '').strip()
         origem_recurso = request.POST.get('origem_recurso', 'COMPRA_EXTERNA')
 
-        produto = get_object_or_404(Produto, id=produto_id)
+        if novo_produto_selecionado:
+            if not novo_produto_form.is_valid():
+                messages.error(request, 'Revise os dados do novo produto.')
+                return render(request, 'estoque/movimentacao_form.html', {
+                    'produtos': produtos_contexto,
+                    'produto_selecionado_id': produto_id,
+                    'tipo_selecionado': tipo,
+                    'data_padrao': data_str or date.today().isoformat(),
+                    'form_values': request.POST,
+                    'ativos': ativos_contexto,
+                    'origens_recurso': Movimentacao.ORIGENS_RECURSO,
+                    'novo_produto_form': novo_produto_form,
+                })
+            if tipo != 'ENTRADA':
+                messages.error(request, 'Um produto novo precisa ser registrado por uma entrada.')
+                produto = novo_produto_form.save(commit=False)
+                erro_produto_novo = True
+            else:
+                produto = novo_produto_form.save(commit=False)
+                erro_produto_novo = False
+        elif produto_id:
+            produto = get_object_or_404(Produto, id=produto_id, ativo=True)
+            erro_produto_novo = False
+        else:
+            messages.error(request, 'Selecione um produto ou escolha cadastrar um novo.')
+            return render(request, 'estoque/movimentacao_form.html', {
+                'produtos': produtos_contexto,
+                'produto_selecionado_id': '',
+                'tipo_selecionado': tipo,
+                'data_padrao': data_str or date.today().isoformat(),
+                'form_values': request.POST,
+                'ativos': ativos_contexto,
+                'origens_recurso': Movimentacao.ORIGENS_RECURSO,
+                'novo_produto_form': novo_produto_form,
+            })
         eh_ativo = produto.categoria in ('MAQUINAS', 'VEICULOS', 'FERRAMENTAS')
         ativo_relacionado = get_object_or_404(AtivoRural, pk=ativo_id) if ativo_id else None
 
@@ -929,7 +999,11 @@ def movimentacao_nova(request):
             'form_values': request.POST,
             'ativos': ativos_contexto,
             'origens_recurso': Movimentacao.ORIGENS_RECURSO,
+            'novo_produto_form': novo_produto_form,
         }
+
+        if erro_produto_novo:
+            return render(request, 'estoque/movimentacao_form.html', ctx_erro)
 
         if tipo not in ('ENTRADA', 'SAIDA'):
             messages.error(request, "Selecione se a operação é uma entrada ou uma saída.")
@@ -989,49 +1063,55 @@ def movimentacao_nova(request):
             comprador = ''
             origem_recurso = 'TRANSFERENCIA_INTERNA'
 
-        lote = None
-        if lote_num and tipo == 'SAIDA':
-            lote = produto.lotes.filter(numero_lote=lote_num).first()
-            if lote is None:
-                messages.error(request, "O lote informado não está cadastrado para este produto e não pode ser usado em uma saída.")
-                return render(request, 'estoque/movimentacao_form.html', ctx_erro)
-            if quantidade > lote.saldo_lote:
-                messages.error(
-                    request,
-                    f"Saída não permitida: o lote {lote_num} possui saldo de {lote.saldo_lote} {produto.unidade}.",
-                )
-                return render(request, 'estoque/movimentacao_form.html', ctx_erro)
-        elif lote_num:
-            data_val = date.fromisoformat(validade_str) if validade_str else None
-            lote, _ = Lote.objects.get_or_create(
-                produto=produto,
-                numero_lote=lote_num,
-                defaults={'data_validade': data_val},
-            )
-            if data_val and not lote.data_validade:
-                lote.data_validade = data_val
-                lote.save()
-
         preco = Decimal(preco_str.replace(',', '.')) if preco_str else None
         valor_total = Decimal(valor_total_str.replace(',', '.')) if valor_total_str else None
 
-        Movimentacao.objects.create(
-            produto=produto,
-            lote=lote,
-            tipo=tipo,
-            quantidade=quantidade,
-            data_movimentacao=date.fromisoformat(data_str) if data_str else timezone.now().date(),
-            preco_unitario=preco,
-            destino=destino,
-            responsavel=responsavel,
-            fornecedor=fornecedor,
-            comprador=comprador,
-            valor_total_pago=valor_total,
-            odometro_km=odometro,
-            horimetro_h=horimetro,
-            ativo=ativo_relacionado,
-            origem_recurso=origem_recurso,
-        )
+        with transaction.atomic():
+            if novo_produto_selecionado:
+                produto.save()
+                if produto.categoria in ('MAQUINAS', 'VEICULOS'):
+                    AtivoRural.objects.get_or_create(produto=produto)
+
+            lote = None
+            if lote_num and tipo == 'SAIDA':
+                lote = produto.lotes.filter(numero_lote=lote_num).first()
+                if lote is None:
+                    messages.error(request, "O lote informado não está cadastrado para este produto e não pode ser usado em uma saída.")
+                    return render(request, 'estoque/movimentacao_form.html', ctx_erro)
+                if quantidade > lote.saldo_lote:
+                    messages.error(
+                        request,
+                        f"Saída não permitida: o lote {lote_num} possui saldo de {lote.saldo_lote} {produto.unidade}.",
+                    )
+                    return render(request, 'estoque/movimentacao_form.html', ctx_erro)
+            elif lote_num:
+                data_val = date.fromisoformat(validade_str) if validade_str else None
+                lote, _ = Lote.objects.get_or_create(
+                    produto=produto,
+                    numero_lote=lote_num,
+                    defaults={'data_validade': data_val},
+                )
+                if data_val and not lote.data_validade:
+                    lote.data_validade = data_val
+                    lote.save()
+
+            Movimentacao.objects.create(
+                produto=produto,
+                lote=lote,
+                tipo=tipo,
+                quantidade=quantidade,
+                data_movimentacao=date.fromisoformat(data_str) if data_str else timezone.now().date(),
+                preco_unitario=preco,
+                destino=destino,
+                responsavel=responsavel,
+                fornecedor=fornecedor,
+                comprador=comprador,
+                valor_total_pago=valor_total,
+                odometro_km=odometro,
+                horimetro_h=horimetro,
+                ativo=ativo_relacionado,
+                origem_recurso=origem_recurso,
+            )
 
         messages.success(
             request,
@@ -1052,6 +1132,7 @@ def movimentacao_nova(request):
         'form_values': {},
         'ativos': ativos_contexto,
         'origens_recurso': Movimentacao.ORIGENS_RECURSO,
+        'novo_produto_form': ProdutoMovimentacaoForm(prefix='novo_produto'),
     }
     return render(request, 'estoque/movimentacao_form.html', context)
 
@@ -1286,6 +1367,44 @@ def lote_editar(request, pk):
     else:
         form = LoteAnimaisForm(instance=lote)
     return render(request, 'estoque/lote_form.html', {'form': form, 'lote': lote, 'titulo': f'Editar {lote.nome}'})
+
+
+def lote_mortalidade(request, pk):
+    """Registra óbito, preserva a ocorrência e atualiza o saldo do rebanho."""
+    lote = get_object_or_404(LoteAnimais, pk=pk, ativo=True)
+    form = MortalidadeAnimalForm(
+        request.POST or None,
+        initial={'data': timezone.localdate()},
+    )
+
+    if request.method == 'POST' and form.is_valid():
+        with transaction.atomic():
+            lote = LoteAnimais.objects.select_for_update().get(pk=pk, ativo=True)
+            quantidade = form.cleaned_data['quantidade']
+            if quantidade > lote.quantidade_cabecas:
+                form.add_error(
+                    'quantidade',
+                    f'O lote possui apenas {lote.quantidade_cabecas} cabeça(s) disponível(is).',
+                )
+            else:
+                ocorrencia = form.save(commit=False)
+                ocorrencia.lote_animais = lote
+                lote.quantidade_cabecas -= quantidade
+                lote.save(update_fields=['quantidade_cabecas', 'atualizado_em'])
+                ocorrencia.save()
+                messages.success(
+                    request,
+                    f'Mortalidade registrada: {quantidade} animal(is). '
+                    f'O lote agora possui {lote.quantidade_cabecas} cabeça(s).',
+                )
+                return redirect('estoque:lote_mortalidade', pk=lote.pk)
+
+    historico = lote.mortalidades.all()
+    return render(request, 'estoque/mortalidade_form.html', {
+        'lote': lote,
+        'form': form,
+        'historico': historico,
+    })
 
 
 def lote_excluir(request, pk):

@@ -694,6 +694,44 @@ class LoteAnimais(models.Model):
                 )
 
 
+class MortalidadeAnimal(models.Model):
+    CATEGORIAS_ANIMAL = [
+        ('VACA', 'Vaca'),
+        ('BOI', 'Boi'),
+        ('BEZERRO', 'Bezerro'),
+        ('OUTRO', 'Outro'),
+    ]
+
+    lote_animais = models.ForeignKey(
+        LoteAnimais,
+        on_delete=models.PROTECT,
+        related_name='mortalidades',
+        verbose_name='Lote de Animais',
+    )
+    categoria_animal = models.CharField(
+        max_length=12,
+        choices=CATEGORIAS_ANIMAL,
+        verbose_name='Categoria do animal',
+    )
+    quantidade = models.PositiveIntegerField(
+        validators=[MinValueValidator(1)],
+        verbose_name='Quantidade de animais',
+    )
+    data = models.DateField(default=timezone.localdate, verbose_name='Data do óbito')
+    causa = models.CharField(max_length=180, blank=True, verbose_name='Causa provável')
+    responsavel = models.CharField(max_length=100, blank=True, verbose_name='Responsável pelo registro')
+    observacoes = models.TextField(blank=True, verbose_name='Observações')
+    criada_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Registro de Mortalidade Animal'
+        verbose_name_plural = 'Registros de Mortalidade Animal'
+        ordering = ['-data', '-id']
+
+    def __str__(self) -> str:
+        return f'{self.quantidade} {self.get_categoria_animal_display()}(s) — {self.lote_animais.nome}'
+
+
 # ---------------------------------------------------------------------------
 # CampanhaVacina — campanhas sanitárias obrigatórias IDARON (RF03.5)
 # ---------------------------------------------------------------------------
